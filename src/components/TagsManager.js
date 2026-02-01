@@ -6,19 +6,25 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
+import ConfirmDialog from './common/ConfirmDialog';
+import { useConfirmDialog } from '../hooks/useConfirmDialog';
 
 const TagsManager = () => {
   const { tags, addTag, deleteTag, tasks } = useContext(AppContext);
+  const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [newTagName, setNewTagName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddTag = () => {
     if (!newTagName.trim()) {
-      Alert.alert('Error', 'Please enter a tag name');
+      showDialog({
+        title: 'Error',
+        message: 'Please enter a tag name',
+        showCancel: false,
+      });
       return;
     }
 
@@ -30,21 +36,20 @@ const TagsManager = () => {
   const handleDeleteTag = (tagId, tagName) => {
     const tagTasks = tasks.filter((task) => task.tags && task.tags.includes(tagId));
     if (tagTasks.length > 0) {
-      Alert.alert(
-        'Cannot Delete',
-        `This tag is used in ${tagTasks.length} task(s). Please remove it from tasks first.`
-      );
+      showDialog({
+        title: 'Cannot Delete',
+        message: `This tag is used in ${tagTasks.length} task(s). Please remove it from tasks first.`,
+        showCancel: false,
+      });
       return;
     }
 
-    Alert.alert(
-      'Delete Tag',
-      `Are you sure you want to delete "#${tagName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteTag(tagId) },
-      ]
-    );
+    showDialog({
+      title: 'Delete Tag',
+      message: `Are you sure you want to delete "#${tagName}"?`,
+      confirmText: 'Delete',
+      onConfirm: () => deleteTag(tagId),
+    });
   };
 
   const getTagTaskCount = (tagId) => {
@@ -111,6 +116,15 @@ const TagsManager = () => {
           contentContainerStyle={styles.listContainer}
         />
       )}
+      <ConfirmDialog
+        visible={dialogState.visible}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmText={dialogState.confirmText}
+        showCancel={dialogState.showCancel}
+        onConfirm={() => handleConfirm(dialogState.onConfirm)}
+        onCancel={hideDialog}
+      />
     </View>
   );
 };

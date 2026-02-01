@@ -14,6 +14,7 @@ import TaskList from './src/components/TaskList';
 import AddTaskModal from './src/components/AddTaskModal';
 import ProjectsManager from './src/components/ProjectsManager';
 import TagsManager from './src/components/TagsManager';
+import Statistics from './src/components/Statistics';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('timer');
@@ -29,6 +30,8 @@ export default function App() {
         return <ProjectsManager />;
       case 'tags':
         return <TagsManager />;
+      case 'stats':
+        return <Statistics />;
       default:
         return <PomodoroTimer />;
     }
@@ -120,6 +123,25 @@ export default function App() {
               ]}
             >
               Tags
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.tabItem}
+            onPress={() => setActiveTab('stats')}
+          >
+            <MaterialIcons
+              name="bar-chart"
+              size={28}
+              color={activeTab === 'stats' ? '#f39c12' : '#95a5a6'}
+            />
+            <Text
+              style={[
+                styles.tabLabel,
+                activeTab === 'stats' && styles.tabLabelActive,
+              ]}
+            >
+              Stats
             </Text>
           </TouchableOpacity>
         </View>

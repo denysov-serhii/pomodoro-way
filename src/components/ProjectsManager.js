@@ -6,19 +6,25 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
+import ConfirmDialog from './common/ConfirmDialog';
+import { useConfirmDialog } from '../hooks/useConfirmDialog';
 
 const ProjectsManager = () => {
   const { projects, addProject, deleteProject, tasks } = useContext(AppContext);
+  const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [newProjectName, setNewProjectName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddProject = () => {
     if (!newProjectName.trim()) {
-      Alert.alert('Error', 'Please enter a project name');
+      showDialog({
+        title: 'Error',
+        message: 'Please enter a project name',
+        showCancel: false,
+      });
       return;
     }
 
@@ -30,21 +36,20 @@ const ProjectsManager = () => {
   const handleDeleteProject = (projectId, projectName) => {
     const projectTasks = tasks.filter((task) => task.projectId === projectId);
     if (projectTasks.length > 0) {
-      Alert.alert(
-        'Cannot Delete',
-        `This project has ${projectTasks.length} task(s). Please reassign or delete the tasks first.`
-      );
+      showDialog({
+        title: 'Cannot Delete',
+        message: `This project has ${projectTasks.length} task(s). Please reassign or delete the tasks first.`,
+        showCancel: false,
+      });
       return;
     }
 
-    Alert.alert(
-      'Delete Project',
-      `Are you sure you want to delete "${projectName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteProject(projectId) },
-      ]
-    );
+    showDialog({
+      title: 'Delete Project',
+      message: `Are you sure you want to delete "${projectName}"?`,
+      confirmText: 'Delete',
+      onConfirm: () => deleteProject(projectId),
+    });
   };
 
   const getProjectTaskCount = (projectId) => {
@@ -111,6 +116,15 @@ const ProjectsManager = () => {
           contentContainerStyle={styles.listContainer}
         />
       )}
+      <ConfirmDialog
+        visible={dialogState.visible}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmText={dialogState.confirmText}
+        showCancel={dialogState.showCancel}
+        onConfirm={() => handleConfirm(dialogState.onConfirm)}
+        onCancel={hideDialog}
+      />
     </View>
   );
 };

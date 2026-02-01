@@ -5,13 +5,15 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
+import ConfirmDialog from './common/ConfirmDialog';
+import { useConfirmDialog } from '../hooks/useConfirmDialog';
 
 const TaskList = ({ onAddTask }) => {
   const { tasks, projects, tags, currentTask, setCurrentTask, deleteTask } = useContext(AppContext);
+  const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
 
   const getProjectName = (projectId) => {
     const project = projects.find((p) => p.id === projectId);
@@ -27,14 +29,12 @@ const TaskList = ({ onAddTask }) => {
   };
 
   const handleDeleteTask = (taskId, taskTitle) => {
-    Alert.alert(
-      'Delete Task',
-      `Are you sure you want to delete "${taskTitle}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteTask(taskId) },
-      ]
-    );
+    showDialog({
+      title: 'Delete Task',
+      message: `Are you sure you want to delete "${taskTitle}"?`,
+      confirmText: 'Delete',
+      onConfirm: () => deleteTask(taskId),
+    });
   };
 
   const renderTask = ({ item }) => {
@@ -114,6 +114,17 @@ const TaskList = ({ onAddTask }) => {
           contentContainerStyle={styles.listContainer}
         />
       )}
+
+      <ConfirmDialog
+        visible={dialogState.visible}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmText={dialogState.confirmText}
+        cancelText={dialogState.cancelText}
+        showCancel={dialogState.showCancel}
+        onConfirm={handleConfirm}
+        onCancel={hideDialog}
+      />
     </View>
   );
 };

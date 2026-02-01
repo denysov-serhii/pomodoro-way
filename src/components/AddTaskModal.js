@@ -7,13 +7,15 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
+import ConfirmDialog from './common/ConfirmDialog';
+import { useConfirmDialog } from '../hooks/useConfirmDialog';
 
 const AddTaskModal = ({ visible, onClose }) => {
   const { addTask, projects, tags } = useContext(AppContext);
+  const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedProject, setSelectedProject] = useState(null);
@@ -21,7 +23,11 @@ const AddTaskModal = ({ visible, onClose }) => {
 
   const handleSave = () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a task title');
+      showDialog({
+        title: 'Error',
+        message: 'Please enter a task title',
+        showCancel: false,
+      });
       return;
     }
 
@@ -167,6 +173,15 @@ const AddTaskModal = ({ visible, onClose }) => {
           </View>
         </View>
       </View>
+      <ConfirmDialog
+        visible={dialogState.visible}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmText={dialogState.confirmText}
+        showCancel={dialogState.showCancel}
+        onConfirm={() => handleConfirm(dialogState.onConfirm)}
+        onCancel={hideDialog}
+      />
     </Modal>
   );
 };
