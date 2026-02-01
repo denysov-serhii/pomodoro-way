@@ -5,7 +5,7 @@ import { useTimerControls } from '../hooks/useTimerControls';
 import TimerDisplay from './timer/TimerDisplay';
 import TimerControls from './timer/TimerControls';
 import TaskSelector from './timer/TaskSelector';
-import ConfirmDialog from './timer/ConfirmDialog';
+import ConfirmDialog from './common/ConfirmDialog';
 import { timerStyles as styles } from '../styles/timerStyles';
 
 const PomodoroTimer = () => {
@@ -44,8 +44,10 @@ const PomodoroTimer = () => {
         visible={confirmDialog.visible}
         title={confirmDialog.title}
         message={confirmDialog.message}
-        onConfirm={confirmDialog.onConfirm}
-        onCancel={() => setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null })}
+        onConfirm={confirmDialog.onConfirm || (() => setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null }))}
+        onCancel={confirmDialog.onConfirm ? () => setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null }) : undefined}
+        showCancel={!!confirmDialog.onConfirm}
+        confirmText={confirmDialog.onConfirm ? 'Finish' : 'OK'}
       />
     </View>
   );
