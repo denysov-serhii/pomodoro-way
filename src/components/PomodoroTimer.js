@@ -6,7 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Modal,
+  FlatList,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
 
 const DURATION_OPTIONS = [
@@ -20,11 +23,12 @@ const DURATION_OPTIONS = [
 ];
 
 const PomodoroTimer = () => {
-  const { currentTask, incrementTaskPomodoro } = useContext(AppContext);
+  const { currentTask, setCurrentTask, incrementTaskPomodoro, tasks } = useContext(AppContext);
   const [selectedDuration, setSelectedDuration] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showTaskSelector, setShowTaskSelector] = useState(false);
 
   useEffect(() => {
     let interval = null;
@@ -58,10 +62,6 @@ const PomodoroTimer = () => {
   };
 
   const handleStart = () => {
-    if (!currentTask) {
-      Alert.alert('No Task Selected', 'Please select a task to start the timer.');
-      return;
-    }
     setIsRunning(true);
     setIsCompleted(false);
   };
@@ -88,18 +88,34 @@ const PomodoroTimer = () => {
     <View style={styles.container}>
       <View style={styles.timerContainer}>
         <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
-        {currentTask && (
-          <View style={styles.taskInfo}>
-            <Text style={styles.currentTaskLabel}>Current Task:</Text>
-            <Text style={styles.currentTaskText}>{currentTask.title}</Text>
-            <Text style={styles.pomodoroCount}>
-              Pomodoros: {currentTask.completedPomodoros || 0}
-            </Text>
-          </View>
-        )}
-        {!currentTask && (
-          <Text style={styles.noTaskText}>Select a task to begin</Text>
-        )}
+        
+        <TouchableOpacity 
+          style={styles.taskSelectorButton}
+          onPress={() => setShowTaskSelector(true)}
+        >
+          {currentTask ? (
+            <View style={styles.taskInfo}>
+              <Text style={styles.currentTaskLabel}>Current Task:</Text>
+              <View style={styles.taskTitleRow}>
+                <Text style={styles.currentTaskText}>{currentTask.title}</Text>
+                <TouchableOpacity 
+                  onPress={() => setCurrentTask(null)}
+                  style={styles.clearTaskButton}
+                >
+                  <MaterialIcons name="close" size={20} color="#e74c3c" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.pomodoroCount}>
+                Pomodoros: {currentTask.completedPomodoros || 0}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.noTaskContainer}>
+              <MaterialIcons name="add-circle-outline" size={24} color="#3498db" />
+              <Text style={styles.noTaskText}>Tap to select a task (optional)</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View style={styles.controlsContainer}>
@@ -143,6 +159,77 @@ const PomodoroTimer = () => {
           ))}
         </ScrollView>
       </View>
+
+      <Modal
+        visible={showTaskSelector}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Task</Text>
+              <TouchableOpacity onPress={() => setShowTaskSelector(false)}>
+                <MaterialIcons name="close" size={24} color="#2c3e50" />
+              </TouchableOpacity>
+            </View>
+
+            {tasks.length === 0 ? (
+              <View style={styles.emptyTasksContainer}>
+                <MaterialIcons name="inbox" size={64} color="#bdc3c7" />
+                <Text style={styles.emptyTasksText}>No tasks available</Text>
+                <Text style={styles.emptyTasksSubtext}>
+                  Go to Tasks tab to create one
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={tasks}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.taskOption,
+                      currentTask?.id === item.id && styles.taskOptionSelected,
+                    ]}
+                    onPress={() => {
+                      setCurrentTask(item);
+                      setShowTaskSelector(false);
+                    }}
+                  >
+                    <View style={styles.taskOptionContent}>
+                      <Text style={styles.taskOptionTitle}>{item.title}</Text>
+                      {item.description && (
+                        <Text style={styles.taskOptionDescription} numberOfLines={1}>
+                          {item.description}
+                        </Text>
+                      )}
+                      <Text style={styles.taskOptionPomodoros}>
+                        {item.completedPomodoros || 0} pomodoros completed
+                      </Text>
+                    </View>
+                    {currentTask?.id === item.id && (
+                      <MaterialIcons name="check-circle" size={24} color="#27ae60" />
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.clearSelectionButton}
+                onPress={() => {
+                  setCurrentTask(null);
+                  setShowTaskSelector(false);
+                }}
+              >
+                <Text style={styles.clearSelectionText}>Clear Selection</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -238,6 +325,113 @@ const styles = StyleSheet.create({
   },
   durationButtonTextSelected: {
     color: '#fff',
+  },
+  taskSelectorButton: {
+    marginTop: 20,
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#3498db',
+    borderStyle: 'dashed',
+    minWidth: 280,
+  },
+  taskTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearTaskButton: {
+    marginLeft: 10,
+    padding: 4,
+  },
+  noTaskContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ecf0f1',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+  emptyTasksContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyTasksText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#95a5a6',
+    marginTop: 15,
+  },
+  emptyTasksSubtext: {
+    fontSize: 14,
+    color: '#bdc3c7',
+    marginTop: 5,
+  },
+  taskOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ecf0f1',
+  },
+  taskOptionSelected: {
+    backgroundColor: '#ebf5fb',
+  },
+  taskOptionContent: {
+    flex: 1,
+  },
+  taskOptionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 4,
+  },
+  taskOptionDescription: {
+    fontSize: 14,
+    color: '#7f8c8d',
+    marginBottom: 4,
+  },
+  taskOptionPomodoros: {
+    fontSize: 12,
+    color: '#e74c3c',
+  },
+  modalFooter: {
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#ecf0f1',
+  },
+  clearSelectionButton: {
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: '#ecf0f1',
+    alignItems: 'center',
+  },
+  clearSelectionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
   },
 });
 
