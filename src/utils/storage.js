@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   TASKS: '@pomodoro_way/tasks',
   PROJECTS: '@pomodoro_way/projects',
   TAGS: '@pomodoro_way/tags',
+  TIMER_STATE: '@pomodoro_way/timer_state',
 };
 
 export const saveTasks = async (tasks) => {
@@ -57,5 +58,31 @@ export const loadTags = async () => {
   } catch (error) {
     console.error('Error loading tags:', error);
     return [];
+  }
+};
+
+export const saveTimerState = async (timerState) => {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.TIMER_STATE, JSON.stringify(timerState));
+  } catch (error) {
+    console.error('Error saving timer state:', error);
+  }
+};
+
+export const loadTimerState = async () => {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.TIMER_STATE);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error('Error loading timer state:', error);
+    return null;
+  }
+};
+
+export const clearTimerState = async () => {
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
+  } catch (error) {
+    console.error('Error clearing timer state:', error);
   }
 };

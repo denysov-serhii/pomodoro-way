@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
+import { saveTimerState, loadTimerState, clearTimerState } from '../utils/storage';
 
 const DURATION_OPTIONS = [
   { label: '25 min', value: 25 },
@@ -29,7 +30,58 @@ const PomodoroTimer = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [showTaskSelector, setShowTaskSelector] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+  const [initialDuration, setInitialDuration] = useState(25 * 60);
+  const hasLoadedState = useRef(false);
 
+  // Load timer state on mount
+  useEffect(() => {
+    const loadSavedState = async () => {
+      if (hasLoadedState.current) return;
+      hasLoadedState.current = true;
+
+      const savedState = await loadTimerState();
+      if (savedState) {
+        const now = Date.now();
+        const elapsedMs = now - savedState.startTime;
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        const remainingTime = savedState.initialDuration - elapsedSeconds;
+
+        if (savedState.isRunning && remainingTime > 0) {
+          // Timer was running, restore it
+          setSelectedDuration(Math.ceil(savedState.initialDuration / 60));
+          setInitialDuration(savedState.initialDuration);
+          setTimeLeft(remainingTime);
+          setIsRunning(true);
+          setStartTime(savedState.startTime);
+          if (savedState.taskId) {
+            const task = tasks.find(t => t.id === savedState.taskId);
+            if (task) setCurrentTask(task);
+          }
+        } else if (savedState.isRunning && remainingTime <= 0) {
+          // Timer completed while away
+          setIsCompleted(true);
+          setTimeLeft(0);
+          if (savedState.taskId) {
+            const task = tasks.find(t => t.id === savedState.taskId);
+            if (task) {
+              setCurrentTask(task);
+              incrementTaskPomodoro(task.id);
+            }
+          }
+          Alert.alert('Pomodoro Complete!', 'Your timer finished while you were away. Great work!');
+          await clearTimerState();
+        } else {
+          // Timer was paused or reset
+          await clearTimerState();
+        }
+      }
+    };
+
+    loadSavedState();
+  }, [tasks, setCurrentTask, incrementTaskPomodoro]);
+
+  // Timer countdown effect
   useEffect(() => {
     let interval = null;
 
@@ -43,6 +95,7 @@ const PomodoroTimer = () => {
               incrementTaskPomodoro(currentTask.id);
             }
             Alert.alert('Pomodoro Complete!', 'Great work! Time for a break.');
+            clearTimerState();
             return 0;
           }
           return time - 1;
@@ -55,6 +108,22 @@ const PomodoroTimer = () => {
     return () => clearInterval(interval);
   }, [isRunning, timeLeft, currentTask, incrementTaskPomodoro]);
 
+  // Save timer state whenever it changes
+  useEffect(() => {
+    if (hasLoadedState.current && isRunning) {
+      const timerState = {
+        isRunning,
+        startTime: startTime || Date.now(),
+        initialDuration,
+        taskId: currentTask?.id || null,
+      };
+      saveTimerState(timerState);
+      if (!startTime) {
+        setStartTime(Date.now());
+      }
+    }
+  }, [isRunning, currentTask, startTime, initialDuration]);
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -64,6 +133,8 @@ const PomodoroTimer = () => {
   const handleStart = () => {
     setIsRunning(true);
     setIsCompleted(false);
+    setStartTime(Date.now());
+    setInitialDuration(timeLeft);
   };
 
   const handlePause = () => {
@@ -73,14 +144,53 @@ const PomodoroTimer = () => {
   const handleReset = () => {
     setIsRunning(false);
     setTimeLeft(selectedDuration * 60);
+    setInitialDuration(selectedDuration * 60);
     setIsCompleted(false);
+    setStartTime(null);
+    clearTimerState();
+  };
+
+  const handleFinish = () => {
+    if (!isRunning && timeLeft === selectedDuration * 60) {
+      Alert.alert('Timer not started', 'Please start the timer first.');
+      return;
+    }
+
+    const timeSpentSeconds = initialDuration - timeLeft;
+    const timeSpentMinutes = Math.floor(timeSpentSeconds / 60);
+    const timeSpentDisplay = timeSpentMinutes > 0 
+      ? `${timeSpentMinutes} minute${timeSpentMinutes !== 1 ? 's' : ''}`
+      : `${timeSpentSeconds} second${timeSpentSeconds !== 1 ? 's' : ''}`;
+
+    Alert.alert(
+      'Finish Early?',
+      `You've worked for ${timeSpentDisplay}. ${currentTask ? 'This will count as a completed pomodoro for the task.' : 'Finish the session?'}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Finish',
+          onPress: () => {
+            setIsRunning(false);
+            setIsCompleted(true);
+            if (currentTask) {
+              incrementTaskPomodoro(currentTask.id);
+            }
+            setTimeLeft(0);
+            clearTimerState();
+            Alert.alert('Session Complete!', `You worked for ${timeSpentDisplay}. Great job!`);
+          },
+        },
+      ]
+    );
   };
 
   const handleDurationChange = (duration) => {
     if (!isRunning) {
       setSelectedDuration(duration);
       setTimeLeft(duration * 60);
+      setInitialDuration(duration * 60);
       setIsCompleted(false);
+      setStartTime(null);
     }
   };
 
@@ -88,6 +198,34 @@ const PomodoroTimer = () => {
     <View style={styles.container}>
       <View style={styles.timerContainer}>
         <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+        
+        {/* Duration options directly under timer */}
+        <View style={styles.durationContainer}>
+          <Text style={styles.durationLabel}>Duration:</Text>
+          <View style={styles.durationOptionsWrapper}>
+            {DURATION_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.durationButton,
+                  selectedDuration === option.value && styles.durationButtonSelected,
+                  isRunning && styles.durationButtonDisabled,
+                ]}
+                onPress={() => handleDurationChange(option.value)}
+                disabled={isRunning}
+              >
+                <Text
+                  style={[
+                    styles.durationButtonText,
+                    selectedDuration === option.value && styles.durationButtonTextSelected,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
         
         <TouchableOpacity 
           style={styles.taskSelectorButton}
@@ -126,38 +264,17 @@ const PomodoroTimer = () => {
           <Text style={styles.buttonText}>{isRunning ? 'Pause' : 'Start'}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.button, styles.resetButton]}
+          style={[styles.button, styles.finishButton]}
+          onPress={handleFinish}
+        >
+          <Text style={styles.buttonText}>Finish</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.iconButton, styles.resetButton]}
           onPress={handleReset}
         >
-          <Text style={styles.buttonText}>Reset</Text>
+          <MaterialIcons name="close" size={28} color="#fff" />
         </TouchableOpacity>
-      </View>
-
-      <View style={styles.durationContainer}>
-        <Text style={styles.durationLabel}>Select Duration:</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {DURATION_OPTIONS.map((option) => (
-            <TouchableOpacity
-              key={option.value}
-              style={[
-                styles.durationButton,
-                selectedDuration === option.value && styles.durationButtonSelected,
-                isRunning && styles.durationButtonDisabled,
-              ]}
-              onPress={() => handleDurationChange(option.value)}
-              disabled={isRunning}
-            >
-              <Text
-                style={[
-                  styles.durationButtonText,
-                  selectedDuration === option.value && styles.durationButtonTextSelected,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       </View>
 
       <Modal
@@ -277,16 +394,28 @@ const styles = StyleSheet.create({
   controlsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 30,
   },
   button: {
-    paddingHorizontal: 40,
+    paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 25,
-    marginHorizontal: 10,
+    marginHorizontal: 5,
+  },
+  iconButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 5,
   },
   startButton: {
     backgroundColor: '#27ae60',
+  },
+  finishButton: {
+    backgroundColor: '#3498db',
   },
   resetButton: {
     backgroundColor: '#e74c3c',
@@ -298,19 +427,26 @@ const styles = StyleSheet.create({
   },
   durationContainer: {
     marginTop: 20,
+    alignItems: 'center',
   },
   durationLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 10,
+    color: '#7f8c8d',
+    marginBottom: 8,
+  },
+  durationOptionsWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    maxWidth: 350,
   },
   durationButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 15,
     backgroundColor: '#ecf0f1',
-    marginRight: 10,
+    margin: 4,
   },
   durationButtonSelected: {
     backgroundColor: '#3498db',
@@ -319,7 +455,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   durationButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#2c3e50',
   },
