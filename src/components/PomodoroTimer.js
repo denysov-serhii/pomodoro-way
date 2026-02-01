@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
   Modal,
   FlatList,
 } from 'react-native';
@@ -33,6 +32,7 @@ const PomodoroTimer = () => {
   const [startTime, setStartTime] = useState(null);
   const [initialDuration, setInitialDuration] = useState(25 * 60);
   const hasLoadedState = useRef(false);
+  const [confirmDialog, setConfirmDialog] = useState({ visible: false, title: '', message: '', onConfirm: null });
 
   // Load timer state on mount
   useEffect(() => {
@@ -69,7 +69,10 @@ const PomodoroTimer = () => {
               incrementTaskPomodoro(task.id);
             }
           }
-          Alert.alert('Pomodoro Complete!', 'Your timer finished while you were away. Great work!');
+          // Use setTimeout to show alert after component renders
+          setTimeout(() => {
+            showAlert('Pomodoro Complete!', 'Your timer finished while you were away. Great work!');
+          }, 100);
           await clearTimerState();
         } else {
           // Timer was paused or reset
@@ -94,7 +97,7 @@ const PomodoroTimer = () => {
             if (currentTask) {
               incrementTaskPomodoro(currentTask.id);
             }
-            Alert.alert('Pomodoro Complete!', 'Great work! Time for a break.');
+            showAlert('Pomodoro Complete!', 'Great work! Time for a break.');
             clearTimerState();
             return 0;
           }
@@ -124,6 +127,20 @@ const PomodoroTimer = () => {
     }
   }, [isRunning, currentTask, startTime, initialDuration]);
 
+  // Helper function to show alerts
+  const showAlert = (title, message, onConfirm = null) => {
+    if (onConfirm) {
+      setConfirmDialog({ visible: true, title, message, onConfirm });
+    } else {
+      setConfirmDialog({ 
+        visible: true, 
+        title, 
+        message, 
+        onConfirm: () => setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null })
+      });
+    }
+  };
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -152,7 +169,7 @@ const PomodoroTimer = () => {
 
   const handleFinish = () => {
     if (!isRunning && timeLeft === selectedDuration * 60) {
-      Alert.alert('Timer not started', 'Please start the timer first.');
+      showAlert('Timer not started', 'Please start the timer first.');
       return;
     }
 
@@ -162,25 +179,22 @@ const PomodoroTimer = () => {
       ? `${timeSpentMinutes} minute${timeSpentMinutes !== 1 ? 's' : ''}`
       : `${timeSpentSeconds} second${timeSpentSeconds !== 1 ? 's' : ''}`;
 
-    Alert.alert(
+    showAlert(
       'Finish Early?',
       `You've worked for ${timeSpentDisplay}. ${currentTask ? 'This will count as a completed pomodoro for the task.' : 'Finish the session?'}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Finish',
-          onPress: () => {
-            setIsRunning(false);
-            setIsCompleted(true);
-            if (currentTask) {
-              incrementTaskPomodoro(currentTask.id);
-            }
-            setTimeLeft(0);
-            clearTimerState();
-            Alert.alert('Session Complete!', `You worked for ${timeSpentDisplay}. Great job!`);
-          },
-        },
-      ]
+      () => {
+        setIsRunning(false);
+        setIsCompleted(true);
+        if (currentTask) {
+          incrementTaskPomodoro(currentTask.id);
+        }
+        setTimeLeft(0);
+        clearTimerState();
+        setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null });
+        setTimeout(() => {
+          showAlert('Session Complete!', `You worked for ${timeSpentDisplay}. Great job!`);
+        }, 100);
+      }
     );
   };
 
@@ -342,6 +356,44 @@ const PomodoroTimer = () => {
                 }}
               >
                 <Text style={styles.clearSelectionText}>Clear Selection</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirmation Dialog Modal */}
+      <Modal
+        visible={confirmDialog.visible}
+        animationType="fade"
+        transparent={true}
+      >
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmDialog}>
+            <Text style={styles.confirmTitle}>{confirmDialog.title}</Text>
+            <Text style={styles.confirmMessage}>{confirmDialog.message}</Text>
+            <View style={styles.confirmButtons}>
+              {confirmDialog.onConfirm && (
+                <TouchableOpacity
+                  style={styles.confirmButtonCancel}
+                  onPress={() => setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null })}
+                >
+                  <Text style={styles.confirmButtonCancelText}>Cancel</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.confirmButtonOk}
+                onPress={() => {
+                  if (confirmDialog.onConfirm) {
+                    confirmDialog.onConfirm();
+                  } else {
+                    setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null });
+                  }
+                }}
+              >
+                <Text style={styles.confirmButtonOkText}>
+                  {confirmDialog.onConfirm ? 'Finish' : 'OK'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -568,6 +620,66 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#2c3e50',
+  },
+  confirmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  confirmDialog: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    width: '90%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  confirmTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  confirmMessage: {
+    fontSize: 16,
+    color: '#7f8c8d',
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  confirmButtonCancel: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#ecf0f1',
+  },
+  confirmButtonCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
+  },
+  confirmButtonOk: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#3498db',
+  },
+  confirmButtonOkText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
 
