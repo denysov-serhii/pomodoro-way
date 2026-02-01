@@ -25,7 +25,7 @@ export const AppProvider = ({ children }) => {
 
   const addTask = async (task) => {
     const newTask = {
-      id: Date.now().toString(),
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       ...task,
       createdAt: new Date().toISOString(),
       completedPomodoros: 0,
@@ -54,7 +54,7 @@ export const AppProvider = ({ children }) => {
 
   const addProject = async (project) => {
     const newProject = {
-      id: Date.now().toString(),
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       ...project,
       createdAt: new Date().toISOString(),
     };
@@ -71,7 +71,7 @@ export const AppProvider = ({ children }) => {
 
   const addTag = async (tag) => {
     const newTag = {
-      id: Date.now().toString(),
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       ...tag,
       createdAt: new Date().toISOString(),
     };
