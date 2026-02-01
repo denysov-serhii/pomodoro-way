@@ -657,13 +657,13 @@ const styles = StyleSheet.create({
   confirmButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 10,
   },
   confirmButtonCancel: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
     backgroundColor: '#ecf0f1',
+    marginRight: 10,
   },
   confirmButtonCancelText: {
     fontSize: 16,
