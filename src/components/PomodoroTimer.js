@@ -38,10 +38,16 @@ const PomodoroTimer = () => {
   useEffect(() => {
     const loadSavedState = async () => {
       if (hasLoadedState.current) return;
-      hasLoadedState.current = true;
 
       const savedState = await loadTimerState();
       if (savedState) {
+        // Wait for tasks to be loaded if we have a taskId to restore
+        if (savedState.taskId && tasks.length === 0) {
+          // Tasks not loaded yet, wait for next render
+          return;
+        }
+
+        hasLoadedState.current = true;
         const now = Date.now();
         const elapsedMs = now - savedState.startTime;
         const elapsedSeconds = Math.floor(elapsedMs / 1000);
@@ -78,6 +84,9 @@ const PomodoroTimer = () => {
           // Timer was paused or reset
           await clearTimerState();
         }
+      } else {
+        // No saved state, mark as loaded
+        hasLoadedState.current = true;
       }
     };
 
