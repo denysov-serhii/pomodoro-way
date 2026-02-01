@@ -179,7 +179,7 @@ const AddTaskModal = ({ visible, onClose }) => {
         message={dialogState.message}
         confirmText={dialogState.confirmText}
         showCancel={dialogState.showCancel}
-        onConfirm={() => handleConfirm(dialogState.onConfirm)}
+        onConfirm={handleConfirm}
         onCancel={hideDialog}
       />
     </Modal>
