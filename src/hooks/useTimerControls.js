@@ -15,6 +15,7 @@ export const useTimerControls = (timerState) => {
     setStartTime,
     setInitialDuration,
     showAlert,
+    hideDialog,
   } = timerState;
 
   const handleStart = () => {
@@ -60,7 +61,7 @@ export const useTimerControls = (timerState) => {
         }
         setTimeLeft(0);
         clearTimerState();
-        timerState.setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null });
+        hideDialog();
         setTimeout(() => {
           showAlert('Session Complete!', `You worked for ${timeSpentDisplay}. Great job!`);
         }, 100);

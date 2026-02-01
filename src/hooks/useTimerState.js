@@ -134,6 +134,10 @@ export const useTimerState = () => {
     }
   };
 
+  const hideDialog = () => {
+    setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null });
+  };
+
   const handleDurationChange = (duration) => {
     if (!isRunning) {
       setSelectedDuration(duration);
@@ -159,6 +163,7 @@ export const useTimerState = () => {
     setInitialDuration,
     setConfirmDialog,
     showAlert,
+    hideDialog,
     handleDurationChange,
   };
 };

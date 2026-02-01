@@ -17,7 +17,7 @@ const PomodoroTimer = () => {
     timeLeft,
     isRunning,
     confirmDialog,
-    setConfirmDialog,
+    hideDialog,
     handleDurationChange,
   } = timerState;
 
@@ -44,8 +44,8 @@ const PomodoroTimer = () => {
         visible={confirmDialog.visible}
         title={confirmDialog.title}
         message={confirmDialog.message}
-        onConfirm={confirmDialog.onConfirm || (() => setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null }))}
-        onCancel={confirmDialog.onConfirm ? () => setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null }) : undefined}
+        onConfirm={confirmDialog.onConfirm || hideDialog}
+        onCancel={confirmDialog.onConfirm ? hideDialog : undefined}
         showCancel={!!confirmDialog.onConfirm}
         confirmText={confirmDialog.onConfirm ? 'Finish' : 'OK'}
       />
