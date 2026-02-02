@@ -253,6 +253,7 @@ export const useTimerState = () => {
     setStartTime,
     setInitialDuration,
     setSessionType,
+    setSelectedDuration,
     setCompletedPomodoros,
     setConfirmDialog,
     showAlert,
