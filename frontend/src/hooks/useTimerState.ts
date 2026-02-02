@@ -120,27 +120,18 @@ export const useTimerState = () => {
               const newCompletedPomodoros = completedPomodoros + 1;
               setCompletedPomodoros(newCompletedPomodoros);
               
-              // Show pause dialog
+              // Start break automatically
               const isLongBreak = newCompletedPomodoros % 4 === 0;
               const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
               const breakDuration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
-              const breakName = isLongBreak ? 'Long Break' : 'Short Break';
               
-              showAlert(
-                'Pomodoro Complete!',
-                `Great work! Time for a ${breakName} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`,
-                () => {
-                  // Start break
-                  setSessionType(breakType);
-                  setSelectedDuration(breakDuration);
-                  setTimeLeft(breakDuration * 60);
-                  setInitialDuration(breakDuration * 60);
-                  setIsCompleted(false);
-                  setIsRunning(true);
-                  setStartTime(Date.now());
-                  hideDialog();
-                }
-              );
+              setSessionType(breakType);
+              setSelectedDuration(breakDuration);
+              setTimeLeft(breakDuration * 60);
+              setInitialDuration(breakDuration * 60);
+              setIsCompleted(false);
+              setIsRunning(true);
+              setStartTime(Date.now());
             } else {
               // Break completed
               showAlert('Break Complete!', 'Time to get back to work!');
