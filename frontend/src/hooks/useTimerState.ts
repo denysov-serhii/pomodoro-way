@@ -5,6 +5,10 @@ import { DurationOption, ConfirmDialogState } from '../types';
 import { playNotificationSound, initializeAudio } from '../utils/audio';
 
 export const DURATION_OPTIONS: DurationOption[] = [
+
+  { label: '1 min', value: 1 },
+  { label: '5 min', value: 5 },
+  { label: '10 min', value: 10 },
   { label: '25 min', value: 25 },
   { label: '30 min', value: 30 },
   { label: '35 min', value: 35 },
@@ -134,14 +138,20 @@ export const useTimerState = () => {
               const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
               const breakDuration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
               
-              // Prepare the break but don't auto-start it and don't show modal
+
               setSessionType(breakType);
               setSelectedDuration(breakDuration);
               setTimeLeft(breakDuration * 60);
               setInitialDuration(breakDuration * 60);
               setIsCompleted(false);
               setIsRunning(false); // Break is paused, user must start it
-              setStartTime(null);
+              setStartTime(null);              
+              // Show informational message (non-blocking)
+              showAlert(
+                'Pomodoro Complete!',
+                `Great work! Ready for a ${breakName} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`
+              );
+
             } else {
               // Break completed
               playNotificationSound();
