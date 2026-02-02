@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
+import { APP_VERSION, APP_NAME } from '../constants';
 
 const Settings: React.FC = () => {
   const context = useContext(AppContext);
@@ -100,7 +101,7 @@ const Settings: React.FC = () => {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Pomodoro Way v1.0.0</Text>
+        <Text style={styles.footerText}>{APP_NAME} v{APP_VERSION}</Text>
         <Text style={styles.footerSubtext}>Focus & Productivity</Text>
       </View>
     </ScrollView>

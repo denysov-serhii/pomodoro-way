@@ -128,7 +128,7 @@ export const useTimerState = () => {
               
               showAlert(
                 'Pomodoro Complete!',
-                `Great work! Time for a ${breakName} (${breakDuration} min). You've completed ${newCompletedPomodoros} pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`,
+                `Great work! Time for a ${breakName} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`,
                 () => {
                   // Start break
                   setSessionType(breakType);
