@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/storage';
 import { DurationOption, ConfirmDialogState } from '../types';
+import { playNotificationSound, initializeAudio } from '../utils/audio';
 
 export const DURATION_OPTIONS: DurationOption[] = [
   { label: '25 min', value: 25 },
@@ -38,6 +39,11 @@ export const useTimerState = () => {
     showCancel: true,
   });
   const hasLoadedState = useRef<boolean>(false);
+
+  // Initialize audio on mount
+  useEffect(() => {
+    initializeAudio();
+  }, []);
 
   // Load timer state on mount
   useEffect(() => {
@@ -120,29 +126,32 @@ export const useTimerState = () => {
               const newCompletedPomodoros = completedPomodoros + 1;
               setCompletedPomodoros(newCompletedPomodoros);
               
-              // Show pause dialog
+              // Play notification sound
+              playNotificationSound();
+              
+              // Automatically start break (no confirmation dialog)
               const isLongBreak = newCompletedPomodoros % 4 === 0;
               const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
               const breakDuration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
               const breakName = isLongBreak ? 'Long Break' : 'Short Break';
               
+              // Auto-start the break
+              setSessionType(breakType);
+              setSelectedDuration(breakDuration);
+              setTimeLeft(breakDuration * 60);
+              setInitialDuration(breakDuration * 60);
+              setIsCompleted(false);
+              setIsRunning(true);
+              setStartTime(Date.now());
+              
+              // Show informational message (non-blocking)
               showAlert(
                 'Pomodoro Complete!',
-                `Great work! Time for a ${breakName} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`,
-                () => {
-                  // Start break
-                  setSessionType(breakType);
-                  setSelectedDuration(breakDuration);
-                  setTimeLeft(breakDuration * 60);
-                  setInitialDuration(breakDuration * 60);
-                  setIsCompleted(false);
-                  setIsRunning(true);
-                  setStartTime(Date.now());
-                  hideDialog();
-                }
+                `Great work! ${breakName} started (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`
               );
             } else {
               // Break completed
+              playNotificationSound();
               showAlert('Break Complete!', 'Time to get back to work!');
               setSessionType('pomodoro');
               setSelectedDuration(25);
