@@ -1,6 +1,7 @@
 package com.pomodorowork.controller;
 
 import com.pomodorowork.domain.PomodoroSession;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.annotation.*;
 import jakarta.inject.Singleton;
 
@@ -15,7 +16,7 @@ public class PomodoroController {
     private final Map<String, PomodoroSession> sessions = new ConcurrentHashMap<>();
 
     @Get
-    public List<PomodoroSession> list(@QueryValue(required = false) String taskId) {
+    public List<PomodoroSession> list(@Nullable @QueryValue String taskId) {
         if (taskId != null && !taskId.isEmpty()) {
             return sessions.values().stream()
                     .filter(s -> taskId.equals(s.getTaskId()))
