@@ -1,13 +1,18 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { saveTasks, loadTasks, saveProjects, loadProjects, saveTags, loadTags } from '../utils/storage';
+import { Task, Project, Tag, AppContextType } from '../types';
 
-export const AppContext = createContext();
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider = ({ children }) => {
-  const [tasks, setTasks] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [tags, setTags] = useState([]);
-  const [currentTask, setCurrentTask] = useState(null);
+interface AppProviderProps {
+  children: ReactNode;
+}
+
+export const AppProvider = ({ children }: AppProviderProps) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [currentTask, setCurrentTask] = useState<Task | null>(null);
 
   // Load data on mount
   useEffect(() => {
@@ -23,8 +28,8 @@ export const AppProvider = ({ children }) => {
     setTags(loadedTags);
   };
 
-  const addTask = async (task) => {
-    const newTask = {
+  const addTask = async (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros'>) => {
+    const newTask: Task = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       ...task,
       createdAt: new Date().toISOString(),
@@ -35,7 +40,7 @@ export const AppProvider = ({ children }) => {
     await saveTasks(updatedTasks);
   };
 
-  const updateTask = async (taskId, updates) => {
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
     const updatedTasks = tasks.map(task =>
       task.id === taskId ? { ...task, ...updates } : task
     );
@@ -43,7 +48,7 @@ export const AppProvider = ({ children }) => {
     await saveTasks(updatedTasks);
   };
 
-  const deleteTask = async (taskId) => {
+  const deleteTask = async (taskId: string) => {
     const updatedTasks = tasks.filter(task => task.id !== taskId);
     setTasks(updatedTasks);
     await saveTasks(updatedTasks);
@@ -52,8 +57,8 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const addProject = async (project) => {
-    const newProject = {
+  const addProject = async (project: Omit<Project, 'id' | 'createdAt'>) => {
+    const newProject: Project = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       ...project,
       createdAt: new Date().toISOString(),
@@ -63,14 +68,14 @@ export const AppProvider = ({ children }) => {
     await saveProjects(updatedProjects);
   };
 
-  const deleteProject = async (projectId) => {
+  const deleteProject = async (projectId: string) => {
     const updatedProjects = projects.filter(project => project.id !== projectId);
     setProjects(updatedProjects);
     await saveProjects(updatedProjects);
   };
 
-  const addTag = async (tag) => {
-    const newTag = {
+  const addTag = async (tag: Omit<Tag, 'id' | 'createdAt'>) => {
+    const newTag: Tag = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       ...tag,
       createdAt: new Date().toISOString(),
@@ -80,13 +85,13 @@ export const AppProvider = ({ children }) => {
     await saveTags(updatedTags);
   };
 
-  const deleteTag = async (tagId) => {
+  const deleteTag = async (tagId: string) => {
     const updatedTags = tags.filter(tag => tag.id !== tagId);
     setTags(updatedTags);
     await saveTags(updatedTags);
   };
 
-  const incrementTaskPomodoro = async (taskId) => {
+  const incrementTaskPomodoro = async (taskId: string) => {
     const updatedTasks = tasks.map(task =>
       task.id === taskId
         ? { ...task, completedPomodoros: (task.completedPomodoros || 0) + 1 }

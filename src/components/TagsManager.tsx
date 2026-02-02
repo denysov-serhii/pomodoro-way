@@ -11,12 +11,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
 import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
+import { Tag } from '../types';
 
-const TagsManager = () => {
-  const { tags, addTag, deleteTag, tasks } = useContext(AppContext);
+const TagsManager: React.FC = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('TagsManager must be used within AppProvider');
+  }
+  const { tags, addTag, deleteTag, tasks } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
-  const [newTagName, setNewTagName] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
+  const [newTagName, setNewTagName] = useState<string>('');
+  const [isAdding, setIsAdding] = useState<boolean>(false);
 
   const handleAddTag = () => {
     if (!newTagName.trim()) {
@@ -33,7 +38,7 @@ const TagsManager = () => {
     setIsAdding(false);
   };
 
-  const handleDeleteTag = (tagId, tagName) => {
+  const handleDeleteTag = (tagId: string, tagName: string) => {
     const tagTasks = tasks.filter((task) => task.tags && task.tags.includes(tagId));
     if (tagTasks.length > 0) {
       showDialog({
@@ -52,11 +57,11 @@ const TagsManager = () => {
     });
   };
 
-  const getTagTaskCount = (tagId) => {
+  const getTagTaskCount = (tagId: string): number => {
     return tasks.filter((task) => task.tags && task.tags.includes(tagId)).length;
   };
 
-  const renderTag = ({ item }) => {
+  const renderTag = ({ item }: { item: Tag }) => {
     const taskCount = getTagTaskCount(item.id);
 
     return (

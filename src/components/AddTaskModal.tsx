@@ -13,13 +13,22 @@ import { AppContext } from '../contexts/AppContext';
 import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 
-const AddTaskModal = ({ visible, onClose }) => {
-  const { addTask, projects, tags } = useContext(AppContext);
+interface AddTaskModalProps {
+  visible: boolean;
+  onClose: () => void;
+}
+
+const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('AddTaskModal must be used within AppProvider');
+  }
+  const { addTask, projects, tags } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const handleSave = () => {
     if (!title.trim()) {
@@ -46,7 +55,7 @@ const AddTaskModal = ({ visible, onClose }) => {
     onClose();
   };
 
-  const toggleTag = (tagId) => {
+  const toggleTag = (tagId: string) => {
     setSelectedTags((prev) =>
       prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
     );

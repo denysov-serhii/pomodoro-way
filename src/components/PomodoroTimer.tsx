@@ -8,7 +8,7 @@ import TaskSelector from './timer/TaskSelector';
 import ConfirmDialog from './common/ConfirmDialog';
 import { timerStyles as styles } from '../styles/timerStyles';
 
-const PomodoroTimer = () => {
+const PomodoroTimer: React.FC = () => {
   const timerState = useTimerState();
   const { handleStart, handlePause, handleReset, handleFinish } = useTimerControls(timerState);
 

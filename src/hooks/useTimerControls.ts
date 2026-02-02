@@ -2,8 +2,27 @@ import { useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { clearTimerState } from '../utils/storage';
 
-export const useTimerControls = (timerState) => {
-  const { currentTask, incrementTaskPomodoro } = useContext(AppContext);
+interface TimerState {
+  selectedDuration: number;
+  timeLeft: number;
+  isRunning: boolean;
+  initialDuration: number;
+  setIsRunning: (value: boolean) => void;
+  setTimeLeft: (value: number) => void;
+  setIsCompleted: (value: boolean) => void;
+  setStartTime: (value: number | null) => void;
+  setInitialDuration: (value: number) => void;
+  showAlert: (title: string, message: string, onConfirm?: (() => void) | null) => void;
+  hideDialog: () => void;
+}
+
+export const useTimerControls = (timerState: TimerState) => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useTimerControls must be used within AppProvider');
+  }
+  const { currentTask, incrementTaskPomodoro } = context;
+  
   const {
     selectedDuration,
     timeLeft,

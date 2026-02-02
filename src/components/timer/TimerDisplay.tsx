@@ -3,13 +3,20 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { timerStyles as styles } from '../../styles/timerStyles';
 import { DURATION_OPTIONS } from '../../hooks/useTimerState';
 
-const formatTime = (seconds) => {
+const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-const TimerDisplay = ({ timeLeft, selectedDuration, isRunning, onDurationChange }) => {
+interface TimerDisplayProps {
+  timeLeft: number;
+  selectedDuration: number;
+  isRunning: boolean;
+  onDurationChange: (duration: number) => void;
+}
+
+const TimerDisplay: React.FC<TimerDisplayProps> = ({ timeLeft, selectedDuration, isRunning, onDurationChange }) => {
   return (
     <View style={styles.timerContainer}>
       <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>

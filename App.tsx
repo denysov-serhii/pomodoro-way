@@ -16,9 +16,11 @@ import ProjectsManager from './src/components/ProjectsManager';
 import TagsManager from './src/components/TagsManager';
 import Statistics from './src/components/Statistics';
 
+type Tab = 'timer' | 'tasks' | 'projects' | 'tags' | 'stats';
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('timer');
-  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('timer');
+  const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
 
   const renderContent = () => {
     switch (activeTab) {

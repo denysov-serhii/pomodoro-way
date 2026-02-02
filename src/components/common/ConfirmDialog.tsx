@@ -7,7 +7,27 @@ import {
   Modal,
 } from 'react-native';
 
-const ConfirmDialog = ({ visible, title, message, onConfirm, onCancel, confirmText = 'OK', cancelText = 'Cancel', showCancel = true }) => {
+interface ConfirmDialogProps {
+  visible: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel?: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  showCancel?: boolean;
+}
+
+const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ 
+  visible, 
+  title, 
+  message, 
+  onConfirm, 
+  onCancel, 
+  confirmText = 'OK', 
+  cancelText = 'Cancel', 
+  showCancel = true 
+}) => {
   return (
     <Modal
       visible={visible}

@@ -10,25 +10,35 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
 import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
+import { Task } from '../types';
 
-const TaskList = ({ onAddTask }) => {
-  const { tasks, projects, tags, currentTask, setCurrentTask, deleteTask } = useContext(AppContext);
+interface TaskListProps {
+  onAddTask: () => void;
+}
+
+const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('TaskList must be used within AppProvider');
+  }
+  const { tasks, projects, tags, currentTask, setCurrentTask, deleteTask } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
 
-  const getProjectName = (projectId) => {
+  const getProjectName = (projectId?: string | null): string | null => {
+    if (!projectId) return null;
     const project = projects.find((p) => p.id === projectId);
     return project ? project.name : null;
   };
 
-  const getTagNames = (tagIds) => {
+  const getTagNames = (tagIds?: string[]): string[] => {
     if (!tagIds || tagIds.length === 0) return [];
     return tagIds.map((tagId) => {
       const tag = tags.find((t) => t.id === tagId);
       return tag ? tag.name : null;
-    }).filter(Boolean);
+    }).filter((name): name is string => name !== null);
   };
 
-  const handleDeleteTask = (taskId, taskTitle) => {
+  const handleDeleteTask = (taskId: string, taskTitle: string) => {
     showDialog({
       title: 'Delete Task',
       message: `Are you sure you want to delete "${taskTitle}"?`,
@@ -37,7 +47,7 @@ const TaskList = ({ onAddTask }) => {
     });
   };
 
-  const renderTask = ({ item }) => {
+  const renderTask = ({ item }: { item: Task }) => {
     const isSelected = currentTask?.id === item.id;
     const projectName = getProjectName(item.projectId);
     const tagNames = getTagNames(item.tags);

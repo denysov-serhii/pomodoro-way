@@ -1,7 +1,17 @@
 import { useState, useCallback } from 'react';
+import { ConfirmDialogState } from '../types';
+
+interface ShowDialogConfig {
+  title?: string;
+  message?: string;
+  onConfirm?: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  showCancel?: boolean;
+}
 
 export const useConfirmDialog = () => {
-  const [dialogState, setDialogState] = useState({
+  const [dialogState, setDialogState] = useState<ConfirmDialogState>({
     visible: false,
     title: '',
     message: '',
@@ -11,7 +21,7 @@ export const useConfirmDialog = () => {
     showCancel: true,
   });
 
-  const showDialog = useCallback((config) => {
+  const showDialog = useCallback((config: ShowDialogConfig) => {
     setDialogState({
       visible: true,
       title: config.title || '',

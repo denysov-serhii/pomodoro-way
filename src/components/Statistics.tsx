@@ -8,9 +8,30 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
+import { Task, Project, Tag } from '../types';
 
-const Statistics = () => {
-  const { tasks, projects, tags } = useContext(AppContext);
+interface TaskWithMinutes extends Task {
+  minutes: number;
+}
+
+interface ProjectWithStats extends Project {
+  taskCount: number;
+  pomodoros: number;
+  minutes: number;
+}
+
+interface TagWithStats extends Tag {
+  taskCount: number;
+  pomodoros: number;
+  minutes: number;
+}
+
+const Statistics: React.FC = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('Statistics must be used within AppProvider');
+  }
+  const { tasks, projects, tags } = context;
 
   // Calculate total statistics
   const stats = useMemo(() => {
@@ -30,7 +51,7 @@ const Statistics = () => {
   }, [tasks, projects, tags]);
 
   // Calculate task statistics
-  const taskStats = useMemo(() => {
+  const taskStats = useMemo((): TaskWithMinutes[] => {
     return tasks
       .map(task => ({
         ...task,
@@ -40,7 +61,7 @@ const Statistics = () => {
   }, [tasks]);
 
   // Calculate project statistics
-  const projectStats = useMemo(() => {
+  const projectStats = useMemo((): ProjectWithStats[] => {
     return projects.map(project => {
       const projectTasks = tasks.filter(task => task.projectId === project.id);
       const pomodoros = projectTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
@@ -54,7 +75,7 @@ const Statistics = () => {
   }, [projects, tasks]);
 
   // Calculate tag statistics
-  const tagStats = useMemo(() => {
+  const tagStats = useMemo((): TagWithStats[] => {
     return tags.map(tag => {
       const tagTasks = tasks.filter(task => task.tags && task.tags.includes(tag.id));
       const pomodoros = tagTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
@@ -67,7 +88,7 @@ const Statistics = () => {
     }).sort((a, b) => b.pomodoros - a.pomodoros);
   }, [tags, tasks]);
 
-  const formatTime = (minutes) => {
+  const formatTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     if (hours > 0) {
@@ -76,7 +97,7 @@ const Statistics = () => {
     return `${mins}m`;
   };
 
-  const renderTaskItem = ({ item }) => (
+  const renderTaskItem = ({ item }: { item: TaskWithMinutes }) => (
     <View style={styles.statItem}>
       <View style={styles.statItemContent}>
         <Text style={styles.statItemTitle}>{item.title}</Text>
@@ -88,7 +109,7 @@ const Statistics = () => {
     </View>
   );
 
-  const renderProjectItem = ({ item }) => (
+  const renderProjectItem = ({ item }: { item: ProjectWithStats }) => (
     <View style={styles.statItem}>
       <View style={styles.statItemContent}>
         <Text style={styles.statItemTitle}>{item.name}</Text>
@@ -100,7 +121,7 @@ const Statistics = () => {
     </View>
   );
 
-  const renderTagItem = ({ item }) => (
+  const renderTagItem = ({ item }: { item: TagWithStats }) => (
     <View style={styles.statItem}>
       <View style={styles.statItemContent}>
         <Text style={styles.statItemTitle}>#{item.name}</Text>

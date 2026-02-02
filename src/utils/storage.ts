@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Task, Project, Tag, TimerState } from '../types';
 
 const STORAGE_KEYS = {
   TASKS: '@pomodoro_way/tasks',
@@ -7,7 +8,7 @@ const STORAGE_KEYS = {
   TIMER_STATE: '@pomodoro_way/timer_state',
 };
 
-export const saveTasks = async (tasks) => {
+export const saveTasks = async (tasks: Task[]): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
   } catch (error) {
@@ -15,7 +16,7 @@ export const saveTasks = async (tasks) => {
   }
 };
 
-export const loadTasks = async () => {
+export const loadTasks = async (): Promise<Task[]> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.TASKS);
     return data ? JSON.parse(data) : [];
@@ -25,7 +26,7 @@ export const loadTasks = async () => {
   }
 };
 
-export const saveProjects = async (projects) => {
+export const saveProjects = async (projects: Project[]): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
   } catch (error) {
@@ -33,7 +34,7 @@ export const saveProjects = async (projects) => {
   }
 };
 
-export const loadProjects = async () => {
+export const loadProjects = async (): Promise<Project[]> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.PROJECTS);
     return data ? JSON.parse(data) : [];
@@ -43,7 +44,7 @@ export const loadProjects = async () => {
   }
 };
 
-export const saveTags = async (tags) => {
+export const saveTags = async (tags: Tag[]): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.TAGS, JSON.stringify(tags));
   } catch (error) {
@@ -51,7 +52,7 @@ export const saveTags = async (tags) => {
   }
 };
 
-export const loadTags = async () => {
+export const loadTags = async (): Promise<Tag[]> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.TAGS);
     return data ? JSON.parse(data) : [];
@@ -61,7 +62,7 @@ export const loadTags = async () => {
   }
 };
 
-export const saveTimerState = async (timerState) => {
+export const saveTimerState = async (timerState: TimerState): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.TIMER_STATE, JSON.stringify(timerState));
   } catch (error) {
@@ -69,7 +70,7 @@ export const saveTimerState = async (timerState) => {
   }
 };
 
-export const loadTimerState = async () => {
+export const loadTimerState = async (): Promise<TimerState | null> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.TIMER_STATE);
     return data ? JSON.parse(data) : null;
@@ -79,7 +80,7 @@ export const loadTimerState = async () => {
   }
 };
 
-export const clearTimerState = async () => {
+export const clearTimerState = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
   } catch (error) {

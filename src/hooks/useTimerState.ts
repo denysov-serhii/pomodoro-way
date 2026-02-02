@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/storage';
+import { DurationOption, ConfirmDialogState } from '../types';
 
-export const DURATION_OPTIONS = [
+export const DURATION_OPTIONS: DurationOption[] = [
   { label: '25 min', value: 25 },
   { label: '30 min', value: 30 },
   { label: '35 min', value: 35 },
@@ -13,15 +14,28 @@ export const DURATION_OPTIONS = [
 ];
 
 export const useTimerState = () => {
-  const { currentTask, setCurrentTask, incrementTaskPomodoro, tasks } = useContext(AppContext);
-  const [selectedDuration, setSelectedDuration] = useState(25);
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [startTime, setStartTime] = useState(null);
-  const [initialDuration, setInitialDuration] = useState(25 * 60);
-  const [confirmDialog, setConfirmDialog] = useState({ visible: false, title: '', message: '', onConfirm: null });
-  const hasLoadedState = useRef(false);
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useTimerState must be used within AppProvider');
+  }
+  const { currentTask, setCurrentTask, incrementTaskPomodoro, tasks } = context;
+  
+  const [selectedDuration, setSelectedDuration] = useState<number>(25);
+  const [timeLeft, setTimeLeft] = useState<number>(25 * 60);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [initialDuration, setInitialDuration] = useState<number>(25 * 60);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({ 
+    visible: false, 
+    title: '', 
+    message: '', 
+    onConfirm: null,
+    confirmText: 'OK',
+    cancelText: 'Cancel',
+    showCancel: true,
+  });
+  const hasLoadedState = useRef<boolean>(false);
 
   // Load timer state on mount
   useEffect(() => {
@@ -80,7 +94,7 @@ export const useTimerState = () => {
 
   // Timer countdown effect
   useEffect(() => {
-    let interval = null;
+    let interval: NodeJS.Timeout | null = null;
 
     if (isRunning && timeLeft > 0) {
       interval = setInterval(() => {
@@ -98,11 +112,13 @@ export const useTimerState = () => {
           return time - 1;
         });
       }, 1000);
-    } else {
-      clearInterval(interval);
     }
 
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [isRunning, timeLeft, currentTask, incrementTaskPomodoro]);
 
   // Save timer state whenever it changes
@@ -121,24 +137,27 @@ export const useTimerState = () => {
     }
   }, [isRunning, currentTask, startTime, initialDuration]);
 
-  const showAlert = (title, message, onConfirm = null) => {
+  const showAlert = (title: string, message: string, onConfirm: (() => void) | null = null) => {
     if (onConfirm) {
-      setConfirmDialog({ visible: true, title, message, onConfirm });
+      setConfirmDialog({ visible: true, title, message, onConfirm, confirmText: 'OK', cancelText: 'Cancel', showCancel: true });
     } else {
       setConfirmDialog({ 
         visible: true, 
         title, 
         message, 
-        onConfirm: () => setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null })
+        onConfirm: () => setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null, confirmText: 'OK', cancelText: 'Cancel', showCancel: true }),
+        confirmText: 'OK',
+        cancelText: 'Cancel',
+        showCancel: true,
       });
     }
   };
 
   const hideDialog = () => {
-    setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null });
+    setConfirmDialog({ visible: false, title: '', message: '', onConfirm: null, confirmText: 'OK', cancelText: 'Cancel', showCancel: true });
   };
 
-  const handleDurationChange = (duration) => {
+  const handleDurationChange = (duration: number) => {
     if (!isRunning) {
       setSelectedDuration(duration);
       setTimeLeft(duration * 60);

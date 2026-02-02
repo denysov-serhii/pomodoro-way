@@ -11,12 +11,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
 import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
+import { Project } from '../types';
 
-const ProjectsManager = () => {
-  const { projects, addProject, deleteProject, tasks } = useContext(AppContext);
+const ProjectsManager: React.FC = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('ProjectsManager must be used within AppProvider');
+  }
+  const { projects, addProject, deleteProject, tasks } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
-  const [newProjectName, setNewProjectName] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
+  const [newProjectName, setNewProjectName] = useState<string>('');
+  const [isAdding, setIsAdding] = useState<boolean>(false);
 
   const handleAddProject = () => {
     if (!newProjectName.trim()) {
@@ -33,7 +38,7 @@ const ProjectsManager = () => {
     setIsAdding(false);
   };
 
-  const handleDeleteProject = (projectId, projectName) => {
+  const handleDeleteProject = (projectId: string, projectName: string) => {
     const projectTasks = tasks.filter((task) => task.projectId === projectId);
     if (projectTasks.length > 0) {
       showDialog({
@@ -52,11 +57,11 @@ const ProjectsManager = () => {
     });
   };
 
-  const getProjectTaskCount = (projectId) => {
+  const getProjectTaskCount = (projectId: string): number => {
     return tasks.filter((task) => task.projectId === projectId).length;
   };
 
-  const renderProject = ({ item }) => {
+  const renderProject = ({ item }: { item: Project }) => {
     const taskCount = getProjectTaskCount(item.id);
 
     return (

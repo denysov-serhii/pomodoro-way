@@ -3,7 +3,15 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { timerStyles as styles } from '../../styles/timerStyles';
 
-const TimerControls = ({ isRunning, onStart, onPause, onFinish, onReset }) => {
+interface TimerControlsProps {
+  isRunning: boolean;
+  onStart: () => void;
+  onPause: () => void;
+  onFinish: () => void;
+  onReset: () => void;
+}
+
+const TimerControls: React.FC<TimerControlsProps> = ({ isRunning, onStart, onPause, onFinish, onReset }) => {
   return (
     <View style={styles.controlsContainer}>
       <TouchableOpacity

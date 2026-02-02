@@ -4,9 +4,13 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../../contexts/AppContext';
 import { timerStyles as styles } from '../../styles/timerStyles';
 
-const TaskSelector = () => {
-  const { currentTask, setCurrentTask, tasks } = useContext(AppContext);
-  const [showTaskSelector, setShowTaskSelector] = useState(false);
+const TaskSelector: React.FC = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('TaskSelector must be used within AppProvider');
+  }
+  const { currentTask, setCurrentTask, tasks } = context;
+  const [showTaskSelector, setShowTaskSelector] = useState<boolean>(false);
 
   return (
     <>
