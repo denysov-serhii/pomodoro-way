@@ -149,7 +149,7 @@ export const useTimerState = () => {
               // Show informational message (non-blocking)
               showAlert(
                 'Pomodoro Complete!',
-                `Great work! Ready for a ${breakName} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`
+                `Great work! Ready for a ${breakType === 'longBreak' ? 'long break' : 'short break'} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`
               );
 
             } else {
