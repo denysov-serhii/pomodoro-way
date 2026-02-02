@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { clearTimerState } from '../utils/storage';
+import { playNotificationSound } from '../utils/audio';
 
 interface TimerState {
   selectedDuration: number;
@@ -97,6 +98,9 @@ export const useTimerControls = (timerState: TimerState) => {
           clearTimerState();
           hideDialog();
           
+          // Play notification sound
+          playNotificationSound();
+          
           // Set up break in paused state (user must manually start)
           const isLongBreak = newCompletedPomodoros % 4 === 0;
           const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
@@ -109,13 +113,6 @@ export const useTimerControls = (timerState: TimerState) => {
           setIsCompleted(false);
           setIsRunning(false); // Break is paused, user must start it
           setStartTime(null);
-          
-          setTimeout(() => {
-            showAlert(
-              'Pomodoro Complete!',
-              `Great work! Ready for a ${isLongBreak ? 'long break' : 'short break'} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`
-            );
-          }, 100);
         }
       );
     } else {
