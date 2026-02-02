@@ -145,7 +145,7 @@ export const importBackup = async (backupJson: string): Promise<void> => {
     
     // Validate backup data structure
     if (!backupData.version || !backupData.tasks || !backupData.projects || !backupData.tags) {
-      throw new Error('Invalid backup file format');
+      throw new Error('Invalid backup file: missing required fields (version, tasks, projects, or tags)');
     }
     
     // Save all data

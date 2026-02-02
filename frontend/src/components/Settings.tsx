@@ -44,9 +44,9 @@ const Settings: React.FC = () => {
         const blob = new Blob([backupJson], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const exportDate = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
         link.href = url;
-        link.download = `pomodoro-way-backup-${timestamp}.json`;
+        link.download = `pomodoro-way-backup-${exportDate}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -55,10 +55,9 @@ const Settings: React.FC = () => {
         Alert.alert('Success', 'Backup exported successfully!');
       } else {
         // For mobile, we would need to use expo-file-system or expo-sharing
-        // For now, just show the JSON in an alert (mobile implementation would need additional packages)
         Alert.alert(
-          'Backup Data',
-          'Mobile backup download requires additional setup. For now, you can copy this data:\n\n' + backupJson.substring(0, 200) + '...',
+          'Mobile Support Coming Soon',
+          'Backup export for mobile devices will be available in a future update. Please use the web version for now.',
           [{ text: 'OK' }]
         );
       }
