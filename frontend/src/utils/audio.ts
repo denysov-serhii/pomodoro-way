@@ -6,6 +6,7 @@ export const playNotificationSound = async () => {
   try {
     // Unload previous sound if it exists
     if (soundObject) {
+      soundObject.setOnPlaybackStatusUpdate(null);
       await soundObject.unloadAsync();
       soundObject = null;
     }
@@ -23,6 +24,7 @@ export const playNotificationSound = async () => {
     // Unload the sound after it finishes playing
     sound.setOnPlaybackStatusUpdate((status) => {
       if (status.isLoaded && status.didJustFinish) {
+        sound.setOnPlaybackStatusUpdate(null);
         sound.unloadAsync();
       }
     });
