@@ -43,3 +43,16 @@ yarn-error.*
 # IDEs
 .vscode/
 .idea/
+
+# Java/Gradle
+backend/.gradle/
+backend/build/
+backend/out/
+*.class
+*.jar
+*.war
+*.ear
+!backend/gradle/wrapper/gradle-wrapper.jar
+
+# Gradle Daemon
+.gradle

@@ -1,6 +1,26 @@
 # Pomodoro Way
 
-A React Native application for managing tasks and tracking productivity using the Pomodoro Technique.
+A full-stack monorepo for managing tasks and tracking productivity using the Pomodoro Technique.
+
+## Monorepo Structure
+
+This repository contains:
+
+- **Frontend**: React Native application (Expo) for mobile and web
+- **Backend**: Java Micronaut REST API with native image compilation support
+
+```
+pomodoro-way/
+├── frontend/          # React Native Expo application
+│   ├── src/
+│   ├── App.tsx
+│   └── package.json
+├── backend/           # Java Micronaut REST API
+│   ├── src/
+│   ├── build.gradle
+│   └── Dockerfile
+└── README.md         # This file
+```
 
 ## Features
 
@@ -34,12 +54,13 @@ A React Native application for managing tasks and tracking productivity using th
 - All data is stored locally using AsyncStorage
 - Data persists between app sessions
 
-## Installation
+## Installation and Setup
 
-1. Clone the repository:
+### Frontend
+
+1. Navigate to the frontend directory:
 ```bash
-git clone https://github.com/denysov-serhii/pomodoro-way.git
-cd pomodoro-way
+cd frontend
 ```
 
 2. Install dependencies:
@@ -57,23 +78,73 @@ npm start
 - Press `i` for iOS (macOS only)
 - Press `w` for web
 
+### Backend
+
+1. Navigate to the backend directory:
+```bash
+cd backend
+```
+
+2. Run the application (JVM mode):
+```bash
+./gradlew run
+```
+
+3. Build native image (requires GraalVM):
+```bash
+./gradlew nativeCompile
+./build/native/nativeCompile/pomodoro-way-backend
+```
+
+For detailed backend setup and native image compilation, see [backend/README.md](backend/README.md).
+
+## Quick Start with Docker (Backend)
+
+```bash
+cd backend
+docker build -t pomodoro-way-backend .
+docker run -p 8080:8080 pomodoro-way-backend
+```
+
 ## Project Structure
 
+### Frontend Structure
+
+### Frontend Structure
+
 ```
-pomodoro-way/
+frontend/
 ├── src/
 │   ├── components/
-│   │   ├── PomodoroTimer.js      # Timer component with duration options
-│   │   ├── TaskList.js            # Task list display and management
-│   │   ├── AddTaskModal.js        # Modal for creating tasks
-│   │   ├── ProjectsManager.js     # Project management interface
-│   │   └── TagsManager.js         # Tag management interface
+│   │   ├── PomodoroTimer.tsx      # Timer component with duration options
+│   │   ├── TaskList.tsx            # Task list display and management
+│   │   ├── AddTaskModal.tsx        # Modal for creating tasks
+│   │   ├── ProjectsManager.tsx     # Project management interface
+│   │   └── TagsManager.tsx         # Tag management interface
 │   ├── contexts/
-│   │   └── AppContext.js          # Global state management
+│   │   └── AppContext.tsx          # Global state management
 │   └── utils/
-│       └── storage.js             # AsyncStorage utilities
-├── App.js                          # Main application component
+│       └── storage.ts              # AsyncStorage utilities
+├── App.tsx                         # Main application component
 └── package.json
+```
+
+### Backend Structure
+
+```
+backend/
+├── src/
+│   ├── main/
+│   │   ├── java/com/pomodorowork/
+│   │   │   ├── Application.java
+│   │   │   ├── controller/        # REST API controllers
+│   │   │   └── domain/            # Domain models
+│   │   └── resources/
+│   │       └── application.yml    # Micronaut configuration
+│   └── test/                      # Unit tests
+├── build.gradle                    # Gradle build script with native image support
+├── gradlew                         # Gradle wrapper
+└── Dockerfile                      # Multi-stage native image build
 ```
 
 ## Usage
@@ -104,11 +175,64 @@ pomodoro-way/
 
 ## Technologies Used
 
+### Frontend
 - React Native
 - Expo
+- TypeScript
 - AsyncStorage for data persistence
 - React Context API for state management
 - Expo Vector Icons for UI icons
+
+### Backend
+- Java 17
+- Micronaut Framework 4.4.2
+- GraalVM Native Image
+- Gradle 8.5
+- RESTful API design
+
+## API Integration
+
+The backend provides REST API endpoints that can be integrated with the frontend:
+
+- **Tasks API**: `/api/tasks`
+- **Projects API**: `/api/projects`
+- **Tags API**: `/api/tags`
+- **Pomodoro Sessions API**: `/api/pomodoros`
+- **Health Check**: `/api/health`
+
+See [backend/README.md](backend/README.md) for complete API documentation.
+
+## Development
+
+### Frontend Development
+```bash
+cd frontend
+npm start
+```
+
+### Backend Development
+```bash
+cd backend
+./gradlew run
+```
+
+The backend will be available at `http://localhost:8080`.
+
+## Building for Production
+
+### Frontend
+Follow the Expo build process for your target platform.
+
+### Backend Native Image
+```bash
+cd backend
+./gradlew nativeCompile
+```
+
+This creates a standalone native executable with:
+- Fast startup time (~0.1s vs several seconds for JVM)
+- Low memory footprint (~50MB vs several hundred MB)
+- No JVM required for deployment
 
 ## License
 
