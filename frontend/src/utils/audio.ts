@@ -12,7 +12,7 @@ export const playNotificationSound = async () => {
     }
 
     // Create and play a simple notification sound using local asset
-    audioPlayer = createAudioPlayer(require('../../assets/sounds/notification.mp3'));
+    audioPlayer = createAudioPlayer(require('../../assets/sounds/notification.wav'));
     audioPlayer.play();
   } catch (error) {
     console.warn('Error playing notification sound:', error);
