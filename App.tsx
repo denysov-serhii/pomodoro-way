@@ -10,30 +10,25 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppProvider } from './src/contexts/AppContext';
 import PomodoroTimer from './src/components/PomodoroTimer';
-import TaskList from './src/components/TaskList';
-import AddTaskModal from './src/components/AddTaskModal';
-import ProjectsManager from './src/components/ProjectsManager';
-import TagsManager from './src/components/TagsManager';
+import TasksPage from './src/components/TasksPage';
+import Settings from './src/components/Settings';
 import Statistics from './src/components/Statistics';
 
-type Tab = 'timer' | 'tasks' | 'projects' | 'tags' | 'stats';
+type Tab = 'timer' | 'tasks' | 'stats' | 'settings';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('timer');
-  const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'timer':
         return <PomodoroTimer />;
       case 'tasks':
-        return <TaskList onAddTask={() => setShowAddTaskModal(true)} />;
-      case 'projects':
-        return <ProjectsManager />;
-      case 'tags':
-        return <TagsManager />;
+        return <TasksPage />;
       case 'stats':
         return <Statistics />;
+      case 'settings':
+        return <Settings />;
       default:
         return <PomodoroTimer />;
     }
@@ -92,44 +87,6 @@ export default function App() {
 
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => setActiveTab('projects')}
-          >
-            <MaterialIcons
-              name="folder"
-              size={28}
-              color={activeTab === 'projects' ? '#3498db' : '#95a5a6'}
-            />
-            <Text
-              style={[
-                styles.tabLabel,
-                activeTab === 'projects' && styles.tabLabelActive,
-              ]}
-            >
-              Projects
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.tabItem}
-            onPress={() => setActiveTab('tags')}
-          >
-            <MaterialIcons
-              name="label"
-              size={28}
-              color={activeTab === 'tags' ? '#8e44ad' : '#95a5a6'}
-            />
-            <Text
-              style={[
-                styles.tabLabel,
-                activeTab === 'tags' && styles.tabLabelActive,
-              ]}
-            >
-              Tags
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.tabItem}
             onPress={() => setActiveTab('stats')}
           >
             <MaterialIcons
@@ -146,12 +103,26 @@ export default function App() {
               Stats
             </Text>
           </TouchableOpacity>
-        </View>
 
-        <AddTaskModal
-          visible={showAddTaskModal}
-          onClose={() => setShowAddTaskModal(false)}
-        />
+          <TouchableOpacity
+            style={styles.tabItem}
+            onPress={() => setActiveTab('settings')}
+          >
+            <MaterialIcons
+              name="settings"
+              size={28}
+              color={activeTab === 'settings' ? '#3498db' : '#95a5a6'}
+            />
+            <Text
+              style={[
+                styles.tabLabel,
+                activeTab === 'settings' && styles.tabLabelActive,
+              ]}
+            >
+              Settings
+            </Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </AppProvider>
   );

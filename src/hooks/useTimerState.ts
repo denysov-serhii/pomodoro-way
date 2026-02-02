@@ -18,7 +18,7 @@ export const useTimerState = () => {
   if (!context) {
     throw new Error('useTimerState must be used within AppProvider');
   }
-  const { currentTask, setCurrentTask, incrementTaskPomodoro, tasks } = context;
+  const { currentTask, setCurrentTask, incrementTaskPomodoro, tasks, settings } = context;
   
   const [selectedDuration, setSelectedDuration] = useState<number>(25);
   const [timeLeft, setTimeLeft] = useState<number>(25 * 60);
@@ -26,6 +26,8 @@ export const useTimerState = () => {
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [initialDuration, setInitialDuration] = useState<number>(25 * 60);
+  const [sessionType, setSessionType] = useState<'pomodoro' | 'shortBreak' | 'longBreak'>('pomodoro');
+  const [completedPomodoros, setCompletedPomodoros] = useState<number>(0);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({ 
     visible: false, 
     title: '', 
@@ -62,6 +64,8 @@ export const useTimerState = () => {
           setTimeLeft(remainingTime);
           setIsRunning(true);
           setStartTime(savedState.startTime);
+          setSessionType(savedState.sessionType || 'pomodoro');
+          setCompletedPomodoros(savedState.completedPomodoros || 0);
           if (savedState.taskId) {
             const task = tasks.find(t => t.id === savedState.taskId);
             if (task) setCurrentTask(task);
@@ -70,15 +74,20 @@ export const useTimerState = () => {
           // Timer completed while away
           setIsCompleted(true);
           setTimeLeft(0);
+          setSessionType(savedState.sessionType || 'pomodoro');
+          setCompletedPomodoros(savedState.completedPomodoros || 0);
           if (savedState.taskId) {
             const task = tasks.find(t => t.id === savedState.taskId);
             if (task) {
               setCurrentTask(task);
-              incrementTaskPomodoro(task.id);
+              if (savedState.sessionType === 'pomodoro') {
+                incrementTaskPomodoro(task.id);
+              }
             }
           }
           setTimeout(() => {
-            showAlert('Pomodoro Complete!', 'Your timer finished while you were away. Great work!');
+            const sessionName = savedState.sessionType === 'pomodoro' ? 'Pomodoro' : 'Break';
+            showAlert(`${sessionName} Complete!`, 'Your timer finished while you were away. Great work!');
           }, 100);
           await clearTimerState();
         } else {
@@ -102,10 +111,45 @@ export const useTimerState = () => {
           if (time <= 1) {
             setIsRunning(false);
             setIsCompleted(true);
-            if (currentTask) {
-              incrementTaskPomodoro(currentTask.id);
+            
+            if (sessionType === 'pomodoro') {
+              // Pomodoro completed
+              if (currentTask) {
+                incrementTaskPomodoro(currentTask.id);
+              }
+              const newCompletedPomodoros = completedPomodoros + 1;
+              setCompletedPomodoros(newCompletedPomodoros);
+              
+              // Show pause dialog
+              const isLongBreak = newCompletedPomodoros % 4 === 0;
+              const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
+              const breakDuration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
+              const breakName = isLongBreak ? 'Long Break' : 'Short Break';
+              
+              showAlert(
+                'Pomodoro Complete!',
+                `Great work! Time for a ${breakName} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`,
+                () => {
+                  // Start break
+                  setSessionType(breakType);
+                  setSelectedDuration(breakDuration);
+                  setTimeLeft(breakDuration * 60);
+                  setInitialDuration(breakDuration * 60);
+                  setIsCompleted(false);
+                  setIsRunning(true);
+                  setStartTime(Date.now());
+                  hideDialog();
+                }
+              );
+            } else {
+              // Break completed
+              showAlert('Break Complete!', 'Time to get back to work!');
+              setSessionType('pomodoro');
+              setSelectedDuration(25);
+              setTimeLeft(25 * 60);
+              setInitialDuration(25 * 60);
             }
-            showAlert('Pomodoro Complete!', 'Great work! Time for a break.');
+            
             clearTimerState();
             return 0;
           }
@@ -119,7 +163,7 @@ export const useTimerState = () => {
         clearInterval(interval);
       }
     };
-  }, [isRunning, timeLeft, currentTask, incrementTaskPomodoro]);
+  }, [isRunning, timeLeft, currentTask, incrementTaskPomodoro, sessionType, completedPomodoros, settings]);
 
   // Save timer state whenever it changes
   useEffect(() => {
@@ -129,13 +173,15 @@ export const useTimerState = () => {
         startTime: startTime || Date.now(),
         initialDuration,
         taskId: currentTask?.id || null,
+        sessionType,
+        completedPomodoros,
       };
       saveTimerState(timerState);
       if (!startTime) {
         setStartTime(Date.now());
       }
     }
-  }, [isRunning, currentTask, startTime, initialDuration]);
+  }, [isRunning, currentTask, startTime, initialDuration, sessionType, completedPomodoros]);
 
   const showAlert = (title: string, message: string, onConfirm: (() => void) | null = null) => {
     if (onConfirm) {
@@ -158,13 +204,25 @@ export const useTimerState = () => {
   };
 
   const handleDurationChange = (duration: number) => {
-    if (!isRunning) {
+    if (!isRunning && sessionType === 'pomodoro') {
       setSelectedDuration(duration);
       setTimeLeft(duration * 60);
       setInitialDuration(duration * 60);
       setIsCompleted(false);
       setStartTime(null);
     }
+  };
+
+  const skipBreak = () => {
+    setIsRunning(false);
+    setSessionType('pomodoro');
+    setSelectedDuration(25);
+    setTimeLeft(25 * 60);
+    setInitialDuration(25 * 60);
+    setIsCompleted(false);
+    setStartTime(null);
+    clearTimerState();
+    hideDialog();
   };
 
   return {
@@ -174,15 +232,20 @@ export const useTimerState = () => {
     isCompleted,
     startTime,
     initialDuration,
+    sessionType,
+    completedPomodoros,
     confirmDialog,
     setIsRunning,
     setTimeLeft,
     setIsCompleted,
     setStartTime,
     setInitialDuration,
+    setSessionType,
+    setCompletedPomodoros,
     setConfirmDialog,
     showAlert,
     hideDialog,
     handleDurationChange,
+    skipBreak,
   };
 };

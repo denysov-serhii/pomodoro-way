@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Task, Project, Tag, TimerState } from '../types';
+import { Task, Project, Tag, TimerState, Settings } from '../types';
 
 const STORAGE_KEYS = {
   TASKS: '@pomodoro_way/tasks',
   PROJECTS: '@pomodoro_way/projects',
   TAGS: '@pomodoro_way/tags',
   TIMER_STATE: '@pomodoro_way/timer_state',
+  SETTINGS: '@pomodoro_way/settings',
 };
 
 export const saveTasks = async (tasks: Task[]): Promise<void> => {
@@ -85,5 +86,23 @@ export const clearTimerState = async (): Promise<void> => {
     await AsyncStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
   } catch (error) {
     console.error('Error clearing timer state:', error);
+  }
+};
+
+export const saveSettings = async (settings: Settings): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  } catch (error) {
+    console.error('Error saving settings:', error);
+  }
+};
+
+export const loadSettings = async (): Promise<Settings | null> => {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    return null;
   }
 };

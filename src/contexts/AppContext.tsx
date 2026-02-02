@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { saveTasks, loadTasks, saveProjects, loadProjects, saveTags, loadTags } from '../utils/storage';
-import { Task, Project, Tag, AppContextType } from '../types';
+import { saveTasks, loadTasks, saveProjects, loadProjects, saveTags, loadTags, saveSettings, loadSettings } from '../utils/storage';
+import { Task, Project, Tag, AppContextType, Settings } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -13,6 +13,10 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
+  const [settings, setSettings] = useState<Settings>({
+    shortBreakDuration: 5,
+    longBreakDuration: 15,
+  });
 
   // Load data on mount
   useEffect(() => {
@@ -23,9 +27,13 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     const loadedTasks = await loadTasks();
     const loadedProjects = await loadProjects();
     const loadedTags = await loadTags();
+    const loadedSettings = await loadSettings();
     setTasks(loadedTasks);
     setProjects(loadedProjects);
     setTags(loadedTags);
+    if (loadedSettings) {
+      setSettings(loadedSettings);
+    }
   };
 
   const addTask = async (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros'>) => {
@@ -101,6 +109,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     await saveTasks(updatedTasks);
   };
 
+  const updateSettings = async (newSettings: Settings) => {
+    setSettings(newSettings);
+    await saveSettings(newSettings);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -108,6 +121,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         projects,
         tags,
         currentTask,
+        settings,
         setCurrentTask,
         addTask,
         updateTask,
@@ -117,6 +131,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         addTag,
         deleteTag,
         incrementTaskPomodoro,
+        updateSettings,
       }}
     >
       {children}

@@ -25,6 +25,8 @@ export interface TimerState {
   startTime: number;
   initialDuration: number;
   taskId: string | null;
+  sessionType: 'pomodoro' | 'shortBreak' | 'longBreak';
+  completedPomodoros: number;
 }
 
 export interface DurationOption {
@@ -42,11 +44,17 @@ export interface ConfirmDialogState {
   showCancel: boolean;
 }
 
+export interface Settings {
+  shortBreakDuration: number; // in minutes
+  longBreakDuration: number; // in minutes
+}
+
 export interface AppContextType {
   tasks: Task[];
   projects: Project[];
   tags: Tag[];
   currentTask: Task | null;
+  settings: Settings;
   setCurrentTask: (task: Task | null) => void;
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros'>) => Promise<void>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
@@ -56,4 +64,5 @@ export interface AppContextType {
   addTag: (tag: Omit<Tag, 'id' | 'createdAt'>) => Promise<void>;
   deleteTag: (tagId: string) => Promise<void>;
   incrementTaskPomodoro: (taskId: string) => Promise<void>;
+  updateSettings: (settings: Settings) => Promise<void>;
 }
