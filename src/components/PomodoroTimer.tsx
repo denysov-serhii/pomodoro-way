@@ -32,7 +32,7 @@ const PomodoroTimer: React.FC = () => {
 
   // Update document title for web
   useEffect(() => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
       const timeString = formatTime(timeLeft);
       const sessionName = sessionType === 'pomodoro' ? 'Pomodoro' : 
                          sessionType === 'shortBreak' ? 'Short Break' : 'Long Break';
