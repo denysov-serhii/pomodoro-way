@@ -23,8 +23,8 @@ const TimerControls: React.FC<TimerControlsProps> = ({
 
   return (
     <View style={styles.controlsContainer}>
-      {/* Only show Start/Pause button during pomodoro or when break is paused */}
-      {!isBreak && (
+      {/* Show Start button during breaks when paused, hide Pause button during running breaks */}
+      {(!isBreak || !isRunning) && (
         <TouchableOpacity
           style={[styles.button, styles.startButton]}
           onPress={isRunning ? onPause : onStart}

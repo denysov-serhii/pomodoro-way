@@ -129,25 +129,25 @@ export const useTimerState = () => {
               // Play notification sound
               playNotificationSound();
               
-              // Automatically start break (no confirmation dialog)
+              // Set up break in paused state (user must manually start)
               const isLongBreak = newCompletedPomodoros % 4 === 0;
               const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
               const breakDuration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
               const breakName = isLongBreak ? 'Long Break' : 'Short Break';
               
-              // Auto-start the break
+              // Prepare the break but don't auto-start it
               setSessionType(breakType);
               setSelectedDuration(breakDuration);
               setTimeLeft(breakDuration * 60);
               setInitialDuration(breakDuration * 60);
               setIsCompleted(false);
-              setIsRunning(true);
-              setStartTime(Date.now());
+              setIsRunning(false); // Break is paused, user must start it
+              setStartTime(null);
               
               // Show informational message (non-blocking)
               showAlert(
                 'Pomodoro Complete!',
-                `Great work! ${breakName} started (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`
+                `Great work! Ready for a ${breakName} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`
               );
             } else {
               // Break completed
