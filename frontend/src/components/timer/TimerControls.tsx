@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import { timerStyles as styles } from '../../styles/timerStyles';
 
 interface TimerControlsProps {
@@ -9,7 +8,6 @@ interface TimerControlsProps {
   onStart: () => void;
   onPause: () => void;
   onFinish: () => void;
-  onReset: () => void;
   onSkipBreak: () => void;
 }
 
@@ -19,19 +17,21 @@ const TimerControls: React.FC<TimerControlsProps> = ({
   onStart, 
   onPause, 
   onFinish, 
-  onReset,
   onSkipBreak,
 }) => {
   const isBreak = sessionType !== 'pomodoro';
 
   return (
     <View style={styles.controlsContainer}>
-      <TouchableOpacity
-        style={[styles.button, styles.startButton]}
-        onPress={isRunning ? onPause : onStart}
-      >
-        <Text style={styles.buttonText}>{isRunning ? 'Pause' : 'Start'}</Text>
-      </TouchableOpacity>
+      {/* Show Start button during breaks when paused, hide Pause button during running breaks */}
+      {(!isBreak || !isRunning) && (
+        <TouchableOpacity
+          style={[styles.button, styles.startButton]}
+          onPress={isRunning ? onPause : onStart}
+        >
+          <Text style={styles.buttonText}>{isRunning ? 'Pause' : 'Start'}</Text>
+        </TouchableOpacity>
+      )}
       
       {isBreak ? (
         <TouchableOpacity
@@ -48,13 +48,6 @@ const TimerControls: React.FC<TimerControlsProps> = ({
           <Text style={styles.buttonText}>Finish</Text>
         </TouchableOpacity>
       )}
-      
-      <TouchableOpacity
-        style={[styles.iconButton, styles.resetButton]}
-        onPress={onReset}
-      >
-        <MaterialIcons name="close" size={28} color="#fff" />
-      </TouchableOpacity>
     </View>
   );
 };

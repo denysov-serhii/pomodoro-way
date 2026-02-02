@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/storage';
 import { DurationOption, ConfirmDialogState } from '../types';
+import { playNotificationSound, initializeAudio } from '../utils/audio';
 
 export const DURATION_OPTIONS: DurationOption[] = [
   { label: '25 min', value: 25 },
@@ -38,6 +39,11 @@ export const useTimerState = () => {
     showCancel: true,
   });
   const hasLoadedState = useRef<boolean>(false);
+
+  // Initialize audio on mount
+  useEffect(() => {
+    initializeAudio();
+  }, []);
 
   // Load timer state on mount
   useEffect(() => {
@@ -120,20 +126,25 @@ export const useTimerState = () => {
               const newCompletedPomodoros = completedPomodoros + 1;
               setCompletedPomodoros(newCompletedPomodoros);
               
-              // Start break automatically
+              // Play notification sound
+              playNotificationSound();
+              
+              // Set up break in paused state (user must manually start)
               const isLongBreak = newCompletedPomodoros % 4 === 0;
               const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
               const breakDuration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
               
+              // Prepare the break but don't auto-start it and don't show modal
               setSessionType(breakType);
               setSelectedDuration(breakDuration);
               setTimeLeft(breakDuration * 60);
               setInitialDuration(breakDuration * 60);
               setIsCompleted(false);
-              setIsRunning(true);
-              setStartTime(Date.now());
+              setIsRunning(false); // Break is paused, user must start it
+              setStartTime(null);
             } else {
               // Break completed
+              playNotificationSound();
               showAlert('Break Complete!', 'Time to get back to work!');
               setSessionType('pomodoro');
               setSelectedDuration(25);
