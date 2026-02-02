@@ -5,17 +5,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
 import { APP_VERSION, APP_NAME } from '../constants';
+import { exportBackup, importBackup } from '../utils/storage';
 
 const Settings: React.FC = () => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('Settings must be used within AppProvider');
   }
-  const { settings, updateSettings } = context;
+  const { settings, updateSettings, reloadData } = context;
   const [localSettings, setLocalSettings] = useState(settings);
 
   const breakDurations = [3, 5, 10, 15, 20, 25, 30];
@@ -30,6 +33,48 @@ const Settings: React.FC = () => {
     const newSettings = { ...localSettings, longBreakDuration: duration };
     setLocalSettings(newSettings);
     updateSettings(newSettings);
+  };
+
+  const handleExportBackup = async () => {
+    try {
+      const backupJson = await exportBackup();
+      
+      if (Platform.OS === 'web') {
+        // For web, create a download link
+        const blob = new Blob([backupJson], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const exportDate = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        link.href = url;
+        link.download = `pomodoro-way-backup-${exportDate}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        Alert.alert('Success', 'Backup exported successfully!');
+      } else {
+        // For mobile, we would need to use expo-file-system or expo-sharing
+        Alert.alert(
+          'Mobile Support Coming Soon',
+          'Backup export for mobile devices will be available in a future update. Please use the web version for now.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export backup. Please try again.');
+      console.error('Export error:', error);
+    }
+  };
+
+  const handleImportBackup = async () => {
+    // Future enhancement: Add file picker and use importBackup + reloadData
+    // Example: await importBackup(fileContent); await reloadData();
+    Alert.alert(
+      'Import Backup',
+      'Import functionality is coming soon. You can manually import by pasting JSON data.',
+      [{ text: 'OK' }]
+    );
   };
 
   const renderDurationOption = (duration: number, current: number, onSelect: (duration: number) => void) => (
@@ -77,6 +122,26 @@ const Settings: React.FC = () => {
           {breakDurations.map((duration) =>
             renderDurationOption(duration, localSettings.longBreakDuration, handleLongBreakChange)
           )}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <MaterialIcons name="backup" size={24} color="#9b59b6" />
+          <Text style={styles.sectionTitle}>Backup & Restore</Text>
+        </View>
+        <Text style={styles.sectionDescription}>
+          Export or import all your tasks, projects, tags, and settings
+        </Text>
+        <View style={styles.backupButtons}>
+          <TouchableOpacity style={styles.exportButton} onPress={handleExportBackup}>
+            <MaterialIcons name="download" size={20} color="#fff" />
+            <Text style={styles.backupButtonText}>Export Backup</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.importButton} onPress={handleImportBackup}>
+            <MaterialIcons name="upload" size={20} color="#fff" />
+            <Text style={styles.backupButtonText}>Import Backup</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -178,6 +243,35 @@ const styles = StyleSheet.create({
   authButtons: {
     flexDirection: 'row',
     gap: 10,
+  },
+  backupButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  exportButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#27ae60',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  importButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3498db',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  backupButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   loginButton: {
     flex: 1,
