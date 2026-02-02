@@ -9,10 +9,33 @@ export const timerStyles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 30,
   },
+  sessionBadge: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 15,
+  },
+  sessionBadgeText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   timerText: {
     fontSize: 72,
     fontWeight: 'bold',
     color: '#2c3e50',
+  },
+  pomodoroCounter: {
+    marginTop: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    backgroundColor: '#fff3cd',
+    borderRadius: 15,
+  },
+  pomodoroCounterText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#856404',
   },
   taskInfo: {
     marginTop: 20,
@@ -65,6 +88,9 @@ export const timerStyles = StyleSheet.create({
   },
   finishButton: {
     backgroundColor: '#3498db',
+  },
+  skipButton: {
+    backgroundColor: '#f39c12',
   },
   resetButton: {
     backgroundColor: '#e74c3c',

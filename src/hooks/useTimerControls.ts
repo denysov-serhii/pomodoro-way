@@ -7,6 +7,7 @@ interface TimerState {
   timeLeft: number;
   isRunning: boolean;
   initialDuration: number;
+  sessionType: 'pomodoro' | 'shortBreak' | 'longBreak';
   setIsRunning: (value: boolean) => void;
   setTimeLeft: (value: number) => void;
   setIsCompleted: (value: boolean) => void;
@@ -14,6 +15,7 @@ interface TimerState {
   setInitialDuration: (value: number) => void;
   showAlert: (title: string, message: string, onConfirm?: (() => void) | null) => void;
   hideDialog: () => void;
+  skipBreak: () => void;
 }
 
 export const useTimerControls = (timerState: TimerState) => {
@@ -28,6 +30,7 @@ export const useTimerControls = (timerState: TimerState) => {
     timeLeft,
     isRunning,
     initialDuration,
+    sessionType,
     setIsRunning,
     setTimeLeft,
     setIsCompleted,
@@ -35,6 +38,7 @@ export const useTimerControls = (timerState: TimerState) => {
     setInitialDuration,
     showAlert,
     hideDialog,
+    skipBreak,
   } = timerState;
 
   const handleStart = () => {
@@ -69,23 +73,28 @@ export const useTimerControls = (timerState: TimerState) => {
       ? `${timeSpentMinutes} minute${timeSpentMinutes !== 1 ? 's' : ''}`
       : `${timeSpentSeconds} second${timeSpentSeconds !== 1 ? 's' : ''}`;
 
-    showAlert(
-      'Finish Early?',
-      `You've worked for ${timeSpentDisplay}. ${currentTask ? 'This will count as a completed pomodoro for the task.' : 'Finish the session?'}`,
-      () => {
-        setIsRunning(false);
-        setIsCompleted(true);
-        if (currentTask) {
-          incrementTaskPomodoro(currentTask.id);
+    if (sessionType === 'pomodoro') {
+      showAlert(
+        'Finish Early?',
+        `You've worked for ${timeSpentDisplay}. ${currentTask ? 'This will count as a completed pomodoro for the task.' : 'Finish the session?'}`,
+        () => {
+          setIsRunning(false);
+          setIsCompleted(true);
+          if (currentTask) {
+            incrementTaskPomodoro(currentTask.id);
+          }
+          setTimeLeft(0);
+          clearTimerState();
+          hideDialog();
+          setTimeout(() => {
+            showAlert('Session Complete!', `You worked for ${timeSpentDisplay}. Great job!`);
+          }, 100);
         }
-        setTimeLeft(0);
-        clearTimerState();
-        hideDialog();
-        setTimeout(() => {
-          showAlert('Session Complete!', `You worked for ${timeSpentDisplay}. Great job!`);
-        }, 100);
-      }
-    );
+      );
+    } else {
+      // Skip break
+      skipBreak();
+    }
   };
 
   return {

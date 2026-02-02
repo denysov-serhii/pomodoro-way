@@ -5,13 +5,25 @@ import { timerStyles as styles } from '../../styles/timerStyles';
 
 interface TimerControlsProps {
   isRunning: boolean;
+  sessionType: 'pomodoro' | 'shortBreak' | 'longBreak';
   onStart: () => void;
   onPause: () => void;
   onFinish: () => void;
   onReset: () => void;
+  onSkipBreak: () => void;
 }
 
-const TimerControls: React.FC<TimerControlsProps> = ({ isRunning, onStart, onPause, onFinish, onReset }) => {
+const TimerControls: React.FC<TimerControlsProps> = ({ 
+  isRunning, 
+  sessionType, 
+  onStart, 
+  onPause, 
+  onFinish, 
+  onReset,
+  onSkipBreak,
+}) => {
+  const isBreak = sessionType !== 'pomodoro';
+
   return (
     <View style={styles.controlsContainer}>
       <TouchableOpacity
@@ -20,12 +32,23 @@ const TimerControls: React.FC<TimerControlsProps> = ({ isRunning, onStart, onPau
       >
         <Text style={styles.buttonText}>{isRunning ? 'Pause' : 'Start'}</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.button, styles.finishButton]}
-        onPress={onFinish}
-      >
-        <Text style={styles.buttonText}>Finish</Text>
-      </TouchableOpacity>
+      
+      {isBreak ? (
+        <TouchableOpacity
+          style={[styles.button, styles.skipButton]}
+          onPress={onSkipBreak}
+        >
+          <Text style={styles.buttonText}>Skip Break</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={[styles.button, styles.finishButton]}
+          onPress={onFinish}
+        >
+          <Text style={styles.buttonText}>Finish</Text>
+        </TouchableOpacity>
+      )}
+      
       <TouchableOpacity
         style={[styles.iconButton, styles.resetButton]}
         onPress={onReset}
