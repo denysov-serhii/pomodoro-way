@@ -54,6 +54,29 @@ pomodoro-way/
 - All data is stored locally using AsyncStorage
 - Data persists between app sessions
 
+## Quick Start
+
+### Using the Build Script
+
+The repository includes a convenient build script to manage both frontend and backend:
+
+```bash
+# Build everything
+./build.sh all
+
+# Build backend only (JVM)
+./build.sh backend
+
+# Build native image (requires GraalVM)
+./build.sh native
+
+# Run backend
+./build.sh run-backend
+
+# Run frontend
+./build.sh run-frontend
+```
+
 ## Installation and Setup
 
 ### Frontend
@@ -101,6 +124,10 @@ For detailed backend setup and native image compilation, see [backend/README.md]
 ## Quick Start with Docker (Backend)
 
 ```bash
+# Build and run using Docker Compose
+docker-compose up --build
+
+# Or build manually
 cd backend
 docker build -t pomodoro-way-backend .
 docker run -p 8080:8080 pomodoro-way-backend
