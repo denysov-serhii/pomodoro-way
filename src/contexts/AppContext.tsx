@@ -30,7 +30,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
   const addTask = async (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros'>) => {
     const newTask: Task = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
       ...task,
       createdAt: new Date().toISOString(),
       completedPomodoros: 0,
@@ -59,7 +59,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
   const addProject = async (project: Omit<Project, 'id' | 'createdAt'>) => {
     const newProject: Project = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
       ...project,
       createdAt: new Date().toISOString(),
     };
@@ -76,7 +76,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
   const addTag = async (tag: Omit<Tag, 'id' | 'createdAt'>) => {
     const newTag: Tag = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
       ...tag,
       createdAt: new Date().toISOString(),
     };
