@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { clearTimerState } from '../utils/storage';
+import { playNotificationSound } from '../utils/audio';
 
 interface TimerState {
   selectedDuration: number;
@@ -8,11 +9,15 @@ interface TimerState {
   isRunning: boolean;
   initialDuration: number;
   sessionType: 'pomodoro' | 'shortBreak' | 'longBreak';
+  completedPomodoros: number;
   setIsRunning: (value: boolean) => void;
   setTimeLeft: (value: number) => void;
   setIsCompleted: (value: boolean) => void;
   setStartTime: (value: number | null) => void;
   setInitialDuration: (value: number) => void;
+  setSessionType: (value: 'pomodoro' | 'shortBreak' | 'longBreak') => void;
+  setSelectedDuration: (value: number) => void;
+  setCompletedPomodoros: (value: number) => void;
   showAlert: (title: string, message: string, onConfirm?: (() => void) | null) => void;
   hideDialog: () => void;
   skipBreak: () => void;
@@ -23,7 +28,7 @@ export const useTimerControls = (timerState: TimerState) => {
   if (!context) {
     throw new Error('useTimerControls must be used within AppProvider');
   }
-  const { currentTask, incrementTaskPomodoro } = context;
+  const { currentTask, incrementTaskPomodoro, settings } = context;
   
   const {
     selectedDuration,
@@ -31,11 +36,15 @@ export const useTimerControls = (timerState: TimerState) => {
     isRunning,
     initialDuration,
     sessionType,
+    completedPomodoros,
     setIsRunning,
     setTimeLeft,
     setIsCompleted,
     setStartTime,
     setInitialDuration,
+    setSessionType,
+    setSelectedDuration,
+    setCompletedPomodoros,
     showAlert,
     hideDialog,
     skipBreak,
@@ -83,12 +92,27 @@ export const useTimerControls = (timerState: TimerState) => {
           if (currentTask) {
             incrementTaskPomodoro(currentTask.id);
           }
+          const newCompletedPomodoros = completedPomodoros + 1;
+          setCompletedPomodoros(newCompletedPomodoros);
           setTimeLeft(0);
           clearTimerState();
           hideDialog();
-          setTimeout(() => {
-            showAlert('Session Complete!', `You worked for ${timeSpentDisplay}. Great job!`);
-          }, 100);
+          
+          // Play notification sound
+          playNotificationSound();
+          
+          // Set up break in paused state (user must manually start)
+          const isLongBreak = newCompletedPomodoros % 4 === 0;
+          const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
+          const breakDuration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
+          
+          setSessionType(breakType);
+          setSelectedDuration(breakDuration);
+          setTimeLeft(breakDuration * 60);
+          setInitialDuration(breakDuration * 60);
+          setIsCompleted(false);
+          setIsRunning(false); // Break is paused, user must start it
+          setStartTime(null);
         }
       );
     } else {

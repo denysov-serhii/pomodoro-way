@@ -145,12 +145,7 @@ export const useTimerState = () => {
               setInitialDuration(breakDuration * 60);
               setIsCompleted(false);
               setIsRunning(false); // Break is paused, user must start it
-              setStartTime(null);              
-              // Show informational message (non-blocking)
-              showAlert(
-                'Pomodoro Complete!',
-                `Great work! Ready for a ${breakName} (${breakDuration} min). You've completed ${newCompletedPomodoros} Pomodoro${newCompletedPomodoros !== 1 ? 's' : ''}.`
-              );
+              setStartTime(null);
 
             } else {
               // Break completed
@@ -253,6 +248,7 @@ export const useTimerState = () => {
     setStartTime,
     setInitialDuration,
     setSessionType,
+    setSelectedDuration,
     setCompletedPomodoros,
     setConfirmDialog,
     showAlert,
