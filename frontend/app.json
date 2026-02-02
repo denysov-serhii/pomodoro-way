@@ -20,16 +20,17 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.gaydara27sorganization.pomodoroway"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
-  },
-  "extra": {
-    "eas": {
-      "projectId": "3270526f-c214-437b-9349-e84b2f9caa80"
-    }
-  },
-  "owner": "gaydara27s-organization"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3270526f-c214-437b-9349-e84b2f9caa80"
+      }
+    },
+    "owner": "gaydara27s-organization"
+  }
 }

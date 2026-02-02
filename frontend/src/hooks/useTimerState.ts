@@ -5,6 +5,10 @@ import { DurationOption, ConfirmDialogState } from '../types';
 import { playNotificationSound, initializeAudio } from '../utils/audio';
 
 export const DURATION_OPTIONS: DurationOption[] = [
+
+  { label: '1 min', value: 1 },
+  { label: '5 min', value: 5 },
+  { label: '10 min', value: 10 },
   { label: '25 min', value: 25 },
   { label: '30 min', value: 30 },
   { label: '35 min', value: 35 },
