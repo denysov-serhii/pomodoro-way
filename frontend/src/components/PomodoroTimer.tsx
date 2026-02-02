@@ -16,7 +16,7 @@ const formatTime = (seconds: number): string => {
 
 const PomodoroTimer: React.FC = () => {
   const timerState = useTimerState();
-  const { handleStart, handlePause, handleReset, handleFinish } = useTimerControls(timerState);
+  const { handleStart, handlePause, handleFinish } = useTimerControls(timerState);
 
   const {
     selectedDuration,
@@ -60,7 +60,6 @@ const PomodoroTimer: React.FC = () => {
         onStart={handleStart}
         onPause={handlePause}
         onFinish={handleFinish}
-        onReset={handleReset}
         onSkipBreak={skipBreak}
       />
 
