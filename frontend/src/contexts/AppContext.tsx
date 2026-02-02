@@ -114,6 +114,10 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     await saveSettings(newSettings);
   };
 
+  const reloadData = async () => {
+    await loadData();
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -132,6 +136,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         deleteTag,
         incrementTaskPomodoro,
         updateSettings,
+        reloadData,
       }}
     >
       {children}

@@ -106,3 +106,57 @@ export const loadSettings = async (): Promise<Settings | null> => {
     return null;
   }
 };
+
+export interface BackupData {
+  version: string;
+  exportDate: string;
+  tasks: Task[];
+  projects: Project[];
+  tags: Tag[];
+  settings: Settings | null;
+}
+
+export const exportBackup = async (): Promise<string> => {
+  try {
+    const tasks = await loadTasks();
+    const projects = await loadProjects();
+    const tags = await loadTags();
+    const settings = await loadSettings();
+    
+    const backupData: BackupData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      tasks,
+      projects,
+      tags,
+      settings,
+    };
+    
+    return JSON.stringify(backupData, null, 2);
+  } catch (error) {
+    console.error('Error exporting backup:', error);
+    throw error;
+  }
+};
+
+export const importBackup = async (backupJson: string): Promise<void> => {
+  try {
+    const backupData: BackupData = JSON.parse(backupJson);
+    
+    // Validate backup data structure
+    if (!backupData.version || !backupData.tasks || !backupData.projects || !backupData.tags) {
+      throw new Error('Invalid backup file format');
+    }
+    
+    // Save all data
+    await saveTasks(backupData.tasks);
+    await saveProjects(backupData.projects);
+    await saveTags(backupData.tags);
+    if (backupData.settings) {
+      await saveSettings(backupData.settings);
+    }
+  } catch (error) {
+    console.error('Error importing backup:', error);
+    throw error;
+  }
+};
