@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "707473719457",
-    "project_id": "pomodoro-way",
-    "storage_bucket": "pomodoro-way.firebasestorage.app"
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "your-project-id",
+    "storage_bucket": "your-project.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:707473719457:android:c5b946a2e9209e719730e0",
+        "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_ID",
         "android_client_info": {
           "package_name": "com.gaydara27sorganization.pomodoroway"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCSR1LiShK61oRMKgiZ8mBjxQA77ix0PXE"
+          "current_key": "YOUR_ANDROID_API_KEY"
         }
       ],
       "services": {
