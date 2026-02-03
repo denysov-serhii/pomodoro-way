@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
+import { Platform } from 'react-native';
 
 // Firebase configuration
 // Note: These values should be set in your .env file
@@ -25,7 +26,19 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore
-export const db = getFirestore(app);
+// Initialize Firestore with React Native optimizations for Android/iOS
+let db;
+if (Platform.OS === 'web') {
+  // Use default Firestore for web
+  db = getFirestore(app);
+} else {
+  // For React Native (Android/iOS), initialize with experimental settings
+  // This ensures better compatibility with React Native's JavaScript engine
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: true,
+  });
+}
 
+export { db };
 export default app;
