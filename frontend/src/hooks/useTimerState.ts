@@ -117,61 +117,67 @@ export const useTimerState = () => {
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
 
-    if (isRunning && timeLeft > 0) {
+    if (isRunning && timeLeft > 0 && startTime) {
       interval = setInterval(() => {
-        setTimeLeft((time) => {
-          if (time <= 1) {
-            setIsRunning(false);
-            setIsCompleted(true);
-            
-            if (sessionType === 'pomodoro') {
-              // Pomodoro completed
-              if (currentTask) {
-                const actualMinutes = Math.round(initialDuration / 60);
-                incrementTaskPomodoro(currentTask.id, actualMinutes);
-              }
-              const newCompletedPomodoros = completedPomodoros + 1;
-              setCompletedPomodoros(newCompletedPomodoros);
-              
-              // Play notification sound and send notification
-              playNotificationSound();
-              sendPomodoroCompleteNotification(currentTask?.title).catch(error => {
-                console.error('Failed to send pomodoro completion notification:', error);
-              });
-              
-              // Set up break in paused state (user must manually start)
-              const isLongBreak = newCompletedPomodoros % 4 === 0;
-              const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
-              const breakDuration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
-              
-
-              setSessionType(breakType);
-              setSelectedDuration(breakDuration);
-              setTimeLeft(breakDuration * 60);
-              setInitialDuration(breakDuration * 60);
-              setIsCompleted(false);
-              setIsRunning(false); // Break is paused, user must start it
-              setStartTime(null);
-
-            } else {
-              // Break completed
-              playNotificationSound();
-              const breakType = sessionType === 'longBreak' ? 'long' : 'short';
-              sendBreakCompleteNotification(breakType).catch(error => {
-                console.error('Failed to send break completion notification:', error);
-              });
-              showAlert('Break Complete!', 'Time to get back to work!');
-              setSessionType('pomodoro');
-              setSelectedDuration(25);
-              setTimeLeft(25 * 60);
-              setInitialDuration(25 * 60);
+        // Calculate expected time based on actual elapsed time
+        const now = Date.now();
+        const elapsedMs = now - startTime;
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        const expectedTimeLeft = initialDuration - elapsedSeconds;
+        
+        if (expectedTimeLeft <= 0) {
+          setTimeLeft(0);
+          setIsRunning(false);
+          setIsCompleted(true);
+          
+          if (sessionType === 'pomodoro') {
+            // Pomodoro completed
+            if (currentTask) {
+              const actualMinutes = Math.round(initialDuration / 60);
+              incrementTaskPomodoro(currentTask.id, actualMinutes);
             }
+            const newCompletedPomodoros = completedPomodoros + 1;
+            setCompletedPomodoros(newCompletedPomodoros);
             
-            clearTimerState();
-            return 0;
+            // Play notification sound and send notification
+            playNotificationSound();
+            sendPomodoroCompleteNotification(currentTask?.title).catch(error => {
+              console.error('Failed to send pomodoro completion notification:', error);
+            });
+            
+            // Set up break in paused state (user must manually start)
+            const isLongBreak = newCompletedPomodoros % 4 === 0;
+            const breakType = isLongBreak ? 'longBreak' : 'shortBreak';
+            const breakDuration = isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration;
+            
+
+            setSessionType(breakType);
+            setSelectedDuration(breakDuration);
+            setTimeLeft(breakDuration * 60);
+            setInitialDuration(breakDuration * 60);
+            setIsCompleted(false);
+            setIsRunning(false); // Break is paused, user must start it
+            setStartTime(null);
+
+          } else {
+            // Break completed
+            playNotificationSound();
+            const breakType = sessionType === 'longBreak' ? 'long' : 'short';
+            sendBreakCompleteNotification(breakType).catch(error => {
+              console.error('Failed to send break completion notification:', error);
+            });
+            showAlert('Break Complete!', 'Time to get back to work!');
+            setSessionType('pomodoro');
+            setSelectedDuration(25);
+            setTimeLeft(25 * 60);
+            setInitialDuration(25 * 60);
           }
-          return time - 1;
-        });
+          
+          clearTimerState();
+        } else {
+          // Synchronize timer with expected time
+          setTimeLeft(expectedTimeLeft);
+        }
       }, 1000);
     }
 
@@ -180,7 +186,7 @@ export const useTimerState = () => {
         clearInterval(interval);
       }
     };
-  }, [isRunning, timeLeft, currentTask, incrementTaskPomodoro, sessionType, completedPomodoros, settings]);
+  }, [isRunning, timeLeft, currentTask, incrementTaskPomodoro, sessionType, completedPomodoros, settings, startTime, initialDuration]);
 
   // Save timer state whenever it changes
   useEffect(() => {

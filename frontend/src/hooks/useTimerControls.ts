@@ -54,12 +54,15 @@ export const useTimerControls = (timerState: TimerState) => {
   const handleStart = () => {
     setIsRunning(true);
     setIsCompleted(false);
+    // Set startTime based on current timeLeft to handle resume after pause
     setStartTime(Date.now());
     setInitialDuration(timeLeft);
   };
 
   const handlePause = () => {
     setIsRunning(false);
+    // startTime will be recalculated on resume
+    setStartTime(null);
   };
 
   const handleReset = () => {
