@@ -64,7 +64,7 @@ export interface AppContextType {
   deleteProject: (projectId: string) => Promise<void>;
   addTag: (tag: Omit<Tag, 'id' | 'createdAt'>) => Promise<void>;
   deleteTag: (tagId: string) => Promise<void>;
-  incrementTaskPomodoro: (taskId: string, durationMinutes?: number) => Promise<void>;
+  incrementTaskPomodoro: (taskId: string, durationMinutes: number) => Promise<void>;
   updateSettings: (settings: Settings) => Promise<void>;
   reloadData: () => Promise<void>;
 }

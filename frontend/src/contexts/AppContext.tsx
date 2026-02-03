@@ -100,13 +100,13 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     await saveTags(updatedTags);
   };
 
-  const incrementTaskPomodoro = async (taskId: string, durationMinutes?: number) => {
+  const incrementTaskPomodoro = async (taskId: string, durationMinutes: number) => {
     const updatedTasks = tasks.map(task =>
       task.id === taskId
         ? { 
             ...task, 
             completedPomodoros: (task.completedPomodoros || 0) + 1,
-            totalMinutes: (task.totalMinutes || 0) + (durationMinutes || 0),
+            totalMinutes: (task.totalMinutes || 0) + durationMinutes,
           }
         : task
     );
