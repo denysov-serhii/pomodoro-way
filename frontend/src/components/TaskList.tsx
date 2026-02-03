@@ -72,9 +72,12 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
           )}
 
           <View style={styles.taskMeta}>
-            <View style={styles.pomodoroInfo} accessibilityLabel={`${item.completedPomodoros || 0} pomodoros`}>
+            <View style={styles.pomodoroInfo}>
               <MaterialIcons name="timer" size={16} color="#e74c3c" />
-              <Text style={styles.pomodoroText}>
+              <Text 
+                style={styles.pomodoroText}
+                accessibilityLabel={`${item.completedPomodoros || 0} pomodoros`}
+              >
                 {item.completedPomodoros || 0}
               </Text>
             </View>
