@@ -37,6 +37,12 @@ A React Native application for managing tasks and tracking productivity using th
 - Real-time updates
 - Secure and scalable cloud storage
 
+### Error Reporting & Debugging
+- Automatic error logging for troubleshooting
+- Export error logs as JSON files on Android, iOS, and web
+- Download error reports for debugging and support
+- Clear error logs when needed
+
 ## Quick Start
 
 ### Using the Build Script
@@ -159,6 +165,8 @@ pomodoro-way/
 - **React Context API** - State management
 - **Expo Vector Icons** - UI icons
 - **AsyncStorage** - Local temporary storage (timer state)
+- **Expo File System** - File operations for Android/iOS
+- **Expo Sharing** - Native file sharing on mobile devices
 
 ## Development
 

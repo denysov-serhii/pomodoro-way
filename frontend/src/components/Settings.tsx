@@ -9,6 +9,8 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { AppContext } from '../contexts/AppContext';
 import { APP_VERSION, APP_NAME } from '../constants';
 import { exportBackup } from '../utils/storage';
@@ -51,9 +53,9 @@ const Settings: React.FC = () => {
         const blob = new Blob([backupJson], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        const exportDate = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const dateString = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
         link.href = url;
-        link.download = `pomodoro-way-backup-${exportDate}.json`;
+        link.download = `pomodoro-way-backup-${dateString}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -61,12 +63,28 @@ const Settings: React.FC = () => {
         
         Alert.alert('Success', 'Backup exported successfully!');
       } else {
-        // For mobile, we would need to use expo-file-system or expo-sharing
-        Alert.alert(
-          'Mobile Support Coming Soon',
-          'Backup export for mobile devices will be available in a future update. Please use the web version for now.',
-          [{ text: 'OK' }]
-        );
+        // For Android and iOS, use expo-file-system and expo-sharing
+        const dateString = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const fileName = `pomodoro-way-backup-${dateString}.json`;
+        const fileUri = FileSystem.documentDirectory + fileName;
+        
+        // Write the JSON data to a file
+        await FileSystem.writeAsStringAsync(fileUri, backupJson, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        
+        // Check if sharing is available
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'application/json',
+            dialogTitle: 'Export Backup',
+            UTI: 'public.json',
+          });
+          Alert.alert('Success', 'Backup exported successfully!');
+        } else {
+          Alert.alert('Error', 'Sharing is not available on this device.');
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to export backup. Please try again.');
@@ -92,12 +110,28 @@ const Settings: React.FC = () => {
         
         Alert.alert('Success', 'Error logs exported successfully!');
       } else {
-        // For mobile, we would need to use expo-file-system or expo-sharing
-        Alert.alert(
-          'Mobile Support Coming Soon',
-          'Error log export for mobile devices will be available in a future update. Please use the web version for now.',
-          [{ text: 'OK' }]
-        );
+        // For Android and iOS, use expo-file-system and expo-sharing
+        const dateString = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const fileName = `pomodoro-way-error-logs-${dateString}.json`;
+        const fileUri = FileSystem.documentDirectory + fileName;
+        
+        // Write the JSON data to a file
+        await FileSystem.writeAsStringAsync(fileUri, errorLogsJson, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        
+        // Check if sharing is available
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'application/json',
+            dialogTitle: 'Export Error Logs',
+            UTI: 'public.json',
+          });
+          Alert.alert('Success', 'Error logs exported successfully!');
+        } else {
+          Alert.alert('Error', 'Sharing is not available on this device.');
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to export error logs. Please try again.');
