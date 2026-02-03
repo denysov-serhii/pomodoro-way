@@ -106,7 +106,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         ? { 
             ...task, 
             completedPomodoros: (task.completedPomodoros || 0) + 1,
-            totalMinutes: task.totalMinutes + durationMinutes,
+            totalMinutes: (task.totalMinutes || 0) + durationMinutes,
           }
         : task
     );
