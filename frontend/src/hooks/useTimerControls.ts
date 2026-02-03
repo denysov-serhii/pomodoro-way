@@ -102,7 +102,9 @@ export const useTimerControls = (timerState: TimerState) => {
           
           // Play notification sound and send notification
           playNotificationSound();
-          sendPomodoroCompleteNotification(currentTask?.title);
+          sendPomodoroCompleteNotification(currentTask?.title).catch(error => {
+            console.error('Failed to send pomodoro completion notification:', error);
+          });
           
           // Set up break in paused state (user must manually start)
           const isLongBreak = newCompletedPomodoros % 4 === 0;
