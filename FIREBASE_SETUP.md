@@ -161,18 +161,22 @@ cd frontend
 eas secret:create --scope project --name GOOGLE_SERVICES_JSON --type file --value ./misc/android/google-services.json
 ```
 
-Then update your `app.json` to use the environment variable:
-```json
-{
-  "expo": {
-    "android": {
-      "googleServicesFile": process.env.GOOGLE_SERVICES_JSON || "./misc/android/google-services.json"
+Then convert your `app.json` to `app.config.js` to use the environment variable:
+
+```javascript
+// app.config.js
+module.exports = {
+  expo: {
+    // ... other expo config
+    android: {
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./misc/android/google-services.json",
+      // ... other android config
     }
   }
-}
+};
 ```
 
-Note: To use environment variables in `app.json`, you'll need to convert it to `app.config.js`.
+This approach keeps your Firebase credentials secure by not committing them to version control.
 
 ## Step 7: Test the Connection
 
