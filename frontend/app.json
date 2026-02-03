@@ -34,7 +34,8 @@
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE"
-      ]
+      ],
+      "googleServicesFile": "./misc/android/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"

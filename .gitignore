@@ -36,6 +36,10 @@ yarn-error.*
 .env
 frontend/.env
 
+# Firebase config files (contains sensitive data)
+google-services.json
+frontend/misc/android/google-services.json
+
 # typescript
 *.tsbuildinfo
 

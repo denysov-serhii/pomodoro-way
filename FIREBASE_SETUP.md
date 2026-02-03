@@ -19,11 +19,28 @@ This guide will help you set up Firebase for the Pomodoro Way application.
 
 ## Step 2: Register Your App
 
+### Web App
+
 1. In the Firebase Console, click on the web icon (`</>`) to add a web app
 2. Register your app:
    - App nickname: "Pomodoro Way Web"
    - You don't need to set up Firebase Hosting (unless you want to)
 3. Click "Register app"
+
+### Android App (for Android builds)
+
+1. In the Firebase Console, click on the Android icon to add an Android app
+2. Register your Android app:
+   - **Android package name**: `com.gaydara27sorganization.pomodoroway` (must match the package in app.json)
+   - App nickname: "Pomodoro Way Android" (optional)
+   - Debug signing certificate SHA-1 (optional, needed for Google Sign-In)
+3. Click "Register app"
+4. **Download the google-services.json file**
+5. Place the downloaded `google-services.json` file in `frontend/misc/android/` directory
+   - The path should be: `frontend/misc/android/google-services.json`
+   - This file is already configured in `app.json` under `android.googleServicesFile`
+   - **Important**: Do NOT commit this file to version control as it contains sensitive data
+6. Click "Next" and skip the remaining steps (they are for native Android projects)
 
 ## Step 3: Get Your Firebase Configuration
 
@@ -98,6 +115,8 @@ service cloud.firestore {
 
 ## Step 6: Configure the App
 
+### Web Configuration
+
 1. In your `frontend` directory, copy `.env.example` to `.env`:
    ```bash
    cd frontend
@@ -115,6 +134,49 @@ service cloud.firestore {
    ```
 
 3. Save the file
+
+### Android Configuration
+
+The Android app is already configured to use the `google-services.json` file placed in `frontend/misc/android/`. The configuration in `app.json` specifies:
+
+```json
+{
+  "expo": {
+    "android": {
+      "googleServicesFile": "./misc/android/google-services.json"
+    }
+  }
+}
+```
+
+**For local builds**: Simply place your `google-services.json` file in `frontend/misc/android/` directory.
+
+**For EAS Build (CI/CD)**: You should use EAS secrets to securely provide the file:
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Create a secret for google-services.json
+eas secret:create --scope project --name GOOGLE_SERVICES_JSON --type file --value ./misc/android/google-services.json
+```
+
+Then convert your `app.json` to `app.config.js` to use the environment variable:
+
+```javascript
+// app.config.js
+module.exports = {
+  expo: {
+    // ... other expo config
+    android: {
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./misc/android/google-services.json",
+      // ... other android config
+    }
+  }
+};
+```
+
+This approach keeps your Firebase credentials secure by not committing them to version control.
 
 ## Step 7: Test the Connection
 
