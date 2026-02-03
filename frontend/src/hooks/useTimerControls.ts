@@ -3,6 +3,7 @@ import { AppContext } from '../contexts/AppContext';
 import { clearTimerState } from '../utils/storage';
 import { playNotificationSound } from '../utils/audio';
 import { sendPomodoroCompleteNotification } from '../utils/notifications';
+import { logError } from '../utils/errorLogger';
 
 interface TimerState {
   selectedDuration: number;
@@ -114,7 +115,7 @@ export const useTimerControls = (timerState: TimerState) => {
           // Play notification sound and send notification
           playNotificationSound();
           sendPomodoroCompleteNotification(currentTask?.title).catch(error => {
-            console.error('Failed to send pomodoro completion notification:', error);
+            logError('Failed to send pomodoro completion notification', 'useTimerControls.handleFinish', error);
           });
           
           // Set up break in paused state (user must manually start)

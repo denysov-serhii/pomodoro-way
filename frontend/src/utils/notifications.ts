@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { logError } from './errorLogger';
 
 // Configure how notifications should be handled when the app is in the foreground
 Notifications.setNotificationHandler({
@@ -64,7 +65,7 @@ export const sendLocalNotification = async (
       trigger: null, // null means immediate
     });
   } catch (error) {
-    console.error('Error sending notification:', error);
+    logError('Error sending notification', 'notifications.sendLocalNotification', error);
   }
 };
 

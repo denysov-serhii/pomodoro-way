@@ -4,6 +4,7 @@ import { saveTimerState, loadTimerState, clearTimerState } from '../utils/storag
 import { DurationOption, ConfirmDialogState } from '../types';
 import { playNotificationSound, initializeAudio } from '../utils/audio';
 import { sendPomodoroCompleteNotification, sendBreakCompleteNotification } from '../utils/notifications';
+import { logError } from '../utils/errorLogger';
 
 export const DURATION_OPTIONS: DurationOption[] = [
 
@@ -145,7 +146,7 @@ export const useTimerState = () => {
             // Play notification sound and send notification
             playNotificationSound();
             sendPomodoroCompleteNotification(currentTask?.title).catch(error => {
-              console.error('Failed to send pomodoro completion notification:', error);
+              logError('Failed to send pomodoro completion notification', 'useTimerState.handleComplete', error);
             });
             
             // Set up break in paused state (user must manually start)
@@ -168,7 +169,7 @@ export const useTimerState = () => {
             playNotificationSound();
             const breakType = sessionType === 'longBreak' ? 'long' : 'short';
             sendBreakCompleteNotification(breakType).catch(error => {
-              console.error('Failed to send break completion notification:', error);
+              logError('Failed to send break completion notification', 'useTimerState.handleComplete', error);
             });
             showAlert('Break Complete!', 'Time to get back to work!');
             setSessionType('pomodoro');
