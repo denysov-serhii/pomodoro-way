@@ -79,8 +79,8 @@ const sanitizeTaskName = (taskName: string): string => {
     ? taskName.substring(0, maxLength) + '...' 
     : taskName;
   
-  // Remove any problematic characters (keep alphanumeric, spaces, and common punctuation)
-  return truncated.replace(/[^\w\s\-.,!?()]/g, '');
+  // Keep only safe characters: alphanumeric, spaces, and common punctuation
+  return truncated.replace(/[^a-zA-Z0-9\s\-.,!?()]/g, '');
 };
 
 /**
