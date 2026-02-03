@@ -53,9 +53,9 @@ const Settings: React.FC = () => {
         const blob = new Blob([backupJson], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        const exportDate = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const dateString = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
         link.href = url;
-        link.download = `pomodoro-way-backup-${exportDate}.json`;
+        link.download = `pomodoro-way-backup-${dateString}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -64,8 +64,8 @@ const Settings: React.FC = () => {
         Alert.alert('Success', 'Backup exported successfully!');
       } else {
         // For Android and iOS, use expo-file-system and expo-sharing
-        const exportDate = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-        const fileName = `pomodoro-way-backup-${exportDate}.json`;
+        const dateString = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const fileName = `pomodoro-way-backup-${dateString}.json`;
         const fileUri = FileSystem.documentDirectory + fileName;
         
         // Write the JSON data to a file
