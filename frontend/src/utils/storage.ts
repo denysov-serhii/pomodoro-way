@@ -1,17 +1,36 @@
+import { db } from '../config/firebase';
+import { collection, getDocs, setDoc, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Task, Project, Tag, TimerState, Settings } from '../types';
 
+// Firestore collection names
+const COLLECTIONS = {
+  TASKS: 'tasks',
+  PROJECTS: 'projects',
+  TAGS: 'tags',
+  SETTINGS: 'settings',
+};
+
+// AsyncStorage keys (used for timer state which is temporary)
 const STORAGE_KEYS = {
-  TASKS: '@pomodoro_way/tasks',
-  PROJECTS: '@pomodoro_way/projects',
-  TAGS: '@pomodoro_way/tags',
   TIMER_STATE: '@pomodoro_way/timer_state',
-  SETTINGS: '@pomodoro_way/settings',
 };
 
 export const saveTasks = async (tasks: Task[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+    // Save each task to Firestore
+    const tasksCollection = collection(db, COLLECTIONS.TASKS);
+    
+    // Clear existing tasks and save new ones
+    const snapshot = await getDocs(tasksCollection);
+    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+    
+    // Save new tasks
+    const savePromises = tasks.map(task => 
+      setDoc(doc(db, COLLECTIONS.TASKS, task.id), task)
+    );
+    await Promise.all(savePromises);
   } catch (error) {
     console.error('Error saving tasks:', error);
   }
@@ -19,8 +38,10 @@ export const saveTasks = async (tasks: Task[]): Promise<void> => {
 
 export const loadTasks = async (): Promise<Task[]> => {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.TASKS);
-    return data ? JSON.parse(data) : [];
+    const tasksCollection = collection(db, COLLECTIONS.TASKS);
+    const q = query(tasksCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as Task);
   } catch (error) {
     console.error('Error loading tasks:', error);
     return [];
@@ -29,7 +50,18 @@ export const loadTasks = async (): Promise<Task[]> => {
 
 export const saveProjects = async (projects: Project[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
+    const projectsCollection = collection(db, COLLECTIONS.PROJECTS);
+    
+    // Clear existing projects and save new ones
+    const snapshot = await getDocs(projectsCollection);
+    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+    
+    // Save new projects
+    const savePromises = projects.map(project => 
+      setDoc(doc(db, COLLECTIONS.PROJECTS, project.id), project)
+    );
+    await Promise.all(savePromises);
   } catch (error) {
     console.error('Error saving projects:', error);
   }
@@ -37,8 +69,10 @@ export const saveProjects = async (projects: Project[]): Promise<void> => {
 
 export const loadProjects = async (): Promise<Project[]> => {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.PROJECTS);
-    return data ? JSON.parse(data) : [];
+    const projectsCollection = collection(db, COLLECTIONS.PROJECTS);
+    const q = query(projectsCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as Project);
   } catch (error) {
     console.error('Error loading projects:', error);
     return [];
@@ -47,7 +81,18 @@ export const loadProjects = async (): Promise<Project[]> => {
 
 export const saveTags = async (tags: Tag[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.TAGS, JSON.stringify(tags));
+    const tagsCollection = collection(db, COLLECTIONS.TAGS);
+    
+    // Clear existing tags and save new ones
+    const snapshot = await getDocs(tagsCollection);
+    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+    
+    // Save new tags
+    const savePromises = tags.map(tag => 
+      setDoc(doc(db, COLLECTIONS.TAGS, tag.id), tag)
+    );
+    await Promise.all(savePromises);
   } catch (error) {
     console.error('Error saving tags:', error);
   }
@@ -55,8 +100,10 @@ export const saveTags = async (tags: Tag[]): Promise<void> => {
 
 export const loadTags = async (): Promise<Tag[]> => {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.TAGS);
-    return data ? JSON.parse(data) : [];
+    const tagsCollection = collection(db, COLLECTIONS.TAGS);
+    const q = query(tagsCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as Tag);
   } catch (error) {
     console.error('Error loading tags:', error);
     return [];
@@ -91,7 +138,7 @@ export const clearTimerState = async (): Promise<void> => {
 
 export const saveSettings = async (settings: Settings): Promise<void> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    await setDoc(doc(db, COLLECTIONS.SETTINGS, 'user_settings'), settings);
   } catch (error) {
     console.error('Error saving settings:', error);
   }
@@ -99,8 +146,12 @@ export const saveSettings = async (settings: Settings): Promise<void> => {
 
 export const loadSettings = async (): Promise<Settings | null> => {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
-    return data ? JSON.parse(data) : null;
+    const settingsCollection = collection(db, COLLECTIONS.SETTINGS);
+    const snapshot = await getDocs(settingsCollection);
+    if (snapshot.docs.length > 0) {
+      return snapshot.docs[0].data() as Settings;
+    }
+    return null;
   } catch (error) {
     console.error('Error loading settings:', error);
     return null;
