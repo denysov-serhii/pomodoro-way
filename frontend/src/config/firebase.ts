@@ -32,11 +32,10 @@ if (Platform.OS === 'web') {
   // Use default Firestore for web
   db = getFirestore(app);
 } else {
-  // For React Native (Android/iOS), initialize with experimental settings
-  // This ensures better compatibility with React Native's JavaScript engine
+  // For React Native (Android/iOS), use long polling for better compatibility
+  // Long polling is more reliable with React Native's JavaScript engine
   db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
-    experimentalAutoDetectLongPolling: true,
   });
 }
 

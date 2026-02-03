@@ -217,8 +217,8 @@ This approach keeps your Firebase credentials secure by not committing them to v
 
 The app is configured to use React Native-specific Firebase settings for better Android compatibility. If you're still experiencing issues:
 
-- The app uses `experimentalForceLongPolling` and `experimentalAutoDetectLongPolling` for Firestore on Android/iOS
-- These settings are automatically applied when running on React Native (non-web platforms)
+- The app uses `experimentalForceLongPolling` for Firestore on Android/iOS for more reliable connections
+- This setting is automatically applied when running on React Native (non-web platforms)
 - If you see network errors, ensure your Android device/emulator has internet access
 - Try clearing the app data and restarting the app
 - Check that the `google-services.json` file is correctly placed in `frontend/misc/android/`
