@@ -25,6 +25,7 @@ export interface TimerState {
   isRunning: boolean;
   startTime: number;
   initialDuration: number;
+  sessionDuration?: number; // Optional for backward compatibility
   taskId: string | null;
   sessionType: 'pomodoro' | 'shortBreak' | 'longBreak';
   completedPomodoros: number;

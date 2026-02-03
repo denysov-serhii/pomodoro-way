@@ -73,7 +73,7 @@ export const useTimerState = () => {
           // Timer was running, restore it
           setSelectedDuration(Math.ceil(savedState.initialDuration / 60));
           setInitialDuration(remainingTime); // For sync calculation from current point
-          setSessionDuration(savedState.initialDuration); // Original session duration
+          setSessionDuration(savedState.sessionDuration || savedState.initialDuration); // Use saved sessionDuration or fall back to initialDuration
           setTimeLeft(remainingTime);
           setIsRunning(true);
           setStartTime(now); // Reset start time to now for accurate sync
@@ -89,14 +89,14 @@ export const useTimerState = () => {
           setTimeLeft(0);
           setSessionType(savedState.sessionType || 'pomodoro');
           setCompletedPomodoros(savedState.completedPomodoros || 0);
-          setSessionDuration(savedState.initialDuration); // Set for potential task credit
+          setSessionDuration(savedState.sessionDuration || savedState.initialDuration); // Use saved sessionDuration or fall back
           if (savedState.taskId) {
             const task = tasks.find(t => t.id === savedState.taskId);
             if (task) {
               setCurrentTask(task);
               if (savedState.sessionType === 'pomodoro') {
-                const actualMinutes = Math.round(savedState.initialDuration / 60);
-                incrementTaskPomodoro(task.id, actualMinutes);
+                const sessionMinutes = Math.round((savedState.sessionDuration || savedState.initialDuration) / 60);
+                incrementTaskPomodoro(task.id, sessionMinutes);
               }
             }
           }
@@ -200,6 +200,7 @@ export const useTimerState = () => {
         isRunning,
         startTime: startTime || Date.now(),
         initialDuration,
+        sessionDuration,
         taskId: currentTask?.id || null,
         sessionType,
         completedPomodoros,
@@ -209,7 +210,7 @@ export const useTimerState = () => {
         setStartTime(Date.now());
       }
     }
-  }, [isRunning, currentTask, startTime, initialDuration, sessionType, completedPomodoros]);
+  }, [isRunning, currentTask, startTime, initialDuration, sessionDuration, sessionType, completedPomodoros]);
 
   const showAlert = (title: string, message: string, onConfirm: (() => void) | null = null) => {
     if (onConfirm) {
