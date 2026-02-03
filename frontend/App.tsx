@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
@@ -13,11 +13,17 @@ import PomodoroTimer from './src/components/PomodoroTimer';
 import TasksPage from './src/components/TasksPage';
 import Settings from './src/components/Settings';
 import Statistics from './src/components/Statistics';
+import { requestNotificationPermissions } from './src/utils/notifications';
 
 type Tab = 'timer' | 'tasks' | 'stats' | 'settings';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('timer');
+
+  // Request notification permissions on app startup
+  useEffect(() => {
+    requestNotificationPermissions();
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {

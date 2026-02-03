@@ -3,6 +3,7 @@ import { AppContext } from '../contexts/AppContext';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/storage';
 import { DurationOption, ConfirmDialogState } from '../types';
 import { playNotificationSound, initializeAudio } from '../utils/audio';
+import { sendPomodoroCompleteNotification, sendBreakCompleteNotification } from '../utils/notifications';
 
 export const DURATION_OPTIONS: DurationOption[] = [
 
@@ -132,8 +133,9 @@ export const useTimerState = () => {
               const newCompletedPomodoros = completedPomodoros + 1;
               setCompletedPomodoros(newCompletedPomodoros);
               
-              // Play notification sound
+              // Play notification sound and send notification
               playNotificationSound();
+              sendPomodoroCompleteNotification(currentTask?.title);
               
               // Set up break in paused state (user must manually start)
               const isLongBreak = newCompletedPomodoros % 4 === 0;
@@ -152,6 +154,8 @@ export const useTimerState = () => {
             } else {
               // Break completed
               playNotificationSound();
+              const breakType = sessionType === 'longBreak' ? 'long' : 'short';
+              sendBreakCompleteNotification(breakType);
               showAlert('Break Complete!', 'Time to get back to work!');
               setSessionType('pomodoro');
               setSelectedDuration(25);
