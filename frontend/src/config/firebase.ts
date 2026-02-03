@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, initializeFirestore } from 'firebase/firestore';
+import { Firestore, getFirestore, initializeFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
 
 // Firebase configuration
@@ -27,7 +27,7 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore with React Native optimizations for Android/iOS
-let db;
+let db: Firestore;
 if (Platform.OS === 'web') {
   // Use default Firestore for web
   db = getFirestore(app);

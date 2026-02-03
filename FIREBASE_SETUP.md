@@ -213,6 +213,16 @@ This approach keeps your Firebase credentials secure by not committing them to v
 - Verify your Firebase project is active in the Firebase Console
 - Check the browser/app console for error messages
 
+### Firebase not working on Android
+
+The app is configured to use React Native-specific Firebase settings for better Android compatibility. If you're still experiencing issues:
+
+- The app uses `experimentalForceLongPolling` and `experimentalAutoDetectLongPolling` for Firestore on Android/iOS
+- These settings are automatically applied when running on React Native (non-web platforms)
+- If you see network errors, ensure your Android device/emulator has internet access
+- Try clearing the app data and restarting the app
+- Check that the `google-services.json` file is correctly placed in `frontend/misc/android/`
+
 ## Optional: Firebase Authentication
 
 If you want to add user authentication (recommended for production):
