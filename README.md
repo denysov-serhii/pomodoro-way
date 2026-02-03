@@ -58,6 +58,7 @@ The repository includes a convenient build script to manage the frontend:
    - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
    - Enable Firestore Database in your project
    - Copy your Firebase configuration values
+   - **See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed setup instructions**
 
 2. **Node.js and npm**
    - Install Node.js (v18 or later recommended)
