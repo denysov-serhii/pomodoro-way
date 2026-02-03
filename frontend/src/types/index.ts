@@ -6,6 +6,7 @@ export interface Task {
   tags?: string[];
   createdAt: string;
   completedPomodoros: number;
+  totalMinutes?: number; // Total actual time spent on this task in minutes
 }
 
 export interface Project {
@@ -63,7 +64,7 @@ export interface AppContextType {
   deleteProject: (projectId: string) => Promise<void>;
   addTag: (tag: Omit<Tag, 'id' | 'createdAt'>) => Promise<void>;
   deleteTag: (tagId: string) => Promise<void>;
-  incrementTaskPomodoro: (taskId: string) => Promise<void>;
+  incrementTaskPomodoro: (taskId: string, durationMinutes?: number) => Promise<void>;
   updateSettings: (settings: Settings) => Promise<void>;
   reloadData: () => Promise<void>;
 }
