@@ -91,7 +91,7 @@ export const useTimerState = () => {
             if (task) {
               setCurrentTask(task);
               if (savedState.sessionType === 'pomodoro') {
-                const actualMinutes = Math.ceil(savedState.initialDuration / 60);
+                const actualMinutes = Math.round(savedState.initialDuration / 60);
                 incrementTaskPomodoro(task.id, actualMinutes);
               }
             }
@@ -126,7 +126,7 @@ export const useTimerState = () => {
             if (sessionType === 'pomodoro') {
               // Pomodoro completed
               if (currentTask) {
-                const actualMinutes = Math.ceil(initialDuration / 60);
+                const actualMinutes = Math.round(initialDuration / 60);
                 incrementTaskPomodoro(currentTask.id, actualMinutes);
               }
               const newCompletedPomodoros = completedPomodoros + 1;

@@ -90,7 +90,7 @@ export const useTimerControls = (timerState: TimerState) => {
           setIsRunning(false);
           setIsCompleted(true);
           if (currentTask) {
-            const actualMinutes = Math.ceil(timeSpentSeconds / 60);
+            const actualMinutes = Math.round(timeSpentSeconds / 60);
             incrementTaskPomodoro(currentTask.id, actualMinutes);
           }
           const newCompletedPomodoros = completedPomodoros + 1;

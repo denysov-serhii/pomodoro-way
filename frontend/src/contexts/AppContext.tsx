@@ -36,7 +36,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     }
   };
 
-  const addTask = async (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros'>) => {
+  const addTask = async (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros' | 'totalMinutes'>) => {
     const newTask: Task = {
       id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
       ...task,
@@ -106,7 +106,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         ? { 
             ...task, 
             completedPomodoros: (task.completedPomodoros || 0) + 1,
-            totalMinutes: (task.totalMinutes || 0) + durationMinutes,
+            totalMinutes: task.totalMinutes + durationMinutes,
           }
         : task
     );

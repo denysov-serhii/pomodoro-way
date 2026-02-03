@@ -6,7 +6,7 @@ export interface Task {
   tags?: string[];
   createdAt: string;
   completedPomodoros: number;
-  totalMinutes?: number; // Total actual time spent on this task in minutes
+  totalMinutes: number; // Total actual time spent on this task in minutes
 }
 
 export interface Project {
@@ -57,7 +57,7 @@ export interface AppContextType {
   currentTask: Task | null;
   settings: Settings;
   setCurrentTask: (task: Task | null) => void;
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros'>) => Promise<void>;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros' | 'totalMinutes'>) => Promise<void>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
   addProject: (project: Omit<Project, 'id' | 'createdAt'>) => Promise<void>;

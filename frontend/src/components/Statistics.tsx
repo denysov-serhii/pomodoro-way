@@ -36,7 +36,7 @@ const Statistics: React.FC = () => {
   // Calculate total statistics
   const stats = useMemo(() => {
     const totalPomodoros = tasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
-    const totalMinutes = tasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
+    const totalMinutes = tasks.reduce((sum, task) => sum + task.totalMinutes, 0);
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
 
@@ -55,7 +55,7 @@ const Statistics: React.FC = () => {
     return tasks
       .map(task => ({
         ...task,
-        minutes: task.totalMinutes || 0,
+        minutes: task.totalMinutes,
       }))
       .sort((a, b) => b.completedPomodoros - a.completedPomodoros);
   }, [tasks]);
@@ -65,7 +65,7 @@ const Statistics: React.FC = () => {
     return projects.map(project => {
       const projectTasks = tasks.filter(task => task.projectId === project.id);
       const pomodoros = projectTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
-      const minutes = projectTasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
+      const minutes = projectTasks.reduce((sum, task) => sum + task.totalMinutes, 0);
       return {
         ...project,
         taskCount: projectTasks.length,
@@ -80,7 +80,7 @@ const Statistics: React.FC = () => {
     return tags.map(tag => {
       const tagTasks = tasks.filter(task => task.tags && task.tags.includes(tag.id));
       const pomodoros = tagTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
-      const minutes = tagTasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
+      const minutes = tagTasks.reduce((sum, task) => sum + task.totalMinutes, 0);
       return {
         ...tag,
         taskCount: tagTasks.length,
