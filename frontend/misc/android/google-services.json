@@ -7,9 +7,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:707473719457:android:c5b946a2e9209e719730e0",
+        "mobilesdk_app_id": "1:707473719457:android:b2ffcc8d2eb233fe9730e0",
         "android_client_info": {
           "package_name": "com.gaydara27sorganization.pomodoroway"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSR1LiShK61oRMKgiZ8mBjxQA77ix0PXE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:707473719457:android:c5b946a2e9209e719730e0",
+        "android_client_info": {
+          "package_name": "com.pomodor.way.com"
         }
       },
       "oauth_client": [],
