@@ -1,7 +1,8 @@
 import { db } from '../config/firebase';
-import { collection, getDocs, setDoc, doc, deleteDoc, query, orderBy, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, setDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Task, Project, Tag, TimerState, Settings } from '../types';
+import { logError } from './errorLogger';
 
 // Firestore collection names
 const COLLECTIONS = {
@@ -40,7 +41,7 @@ export const saveTasks = async (tasks: Task[]): Promise<void> => {
     
     await batch.commit();
   } catch (error) {
-    console.error('Error saving tasks:', error);
+    logError('Error saving tasks', 'storage.saveTasks', error);
   }
 };
 
@@ -51,7 +52,7 @@ export const loadTasks = async (): Promise<Task[]> => {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => doc.data() as Task);
   } catch (error) {
-    console.error('Error loading tasks:', error);
+    logError('Error loading tasks', 'storage.loadTasks', error);
     return [];
   }
 };
@@ -80,7 +81,7 @@ export const saveProjects = async (projects: Project[]): Promise<void> => {
     
     await batch.commit();
   } catch (error) {
-    console.error('Error saving projects:', error);
+    logError('Error saving projects', 'storage.saveProjects', error);
   }
 };
 
@@ -91,7 +92,7 @@ export const loadProjects = async (): Promise<Project[]> => {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => doc.data() as Project);
   } catch (error) {
-    console.error('Error loading projects:', error);
+    logError('Error loading projects', 'storage.loadProjects', error);
     return [];
   }
 };
@@ -120,7 +121,7 @@ export const saveTags = async (tags: Tag[]): Promise<void> => {
     
     await batch.commit();
   } catch (error) {
-    console.error('Error saving tags:', error);
+    logError('Error saving tags', 'storage.saveTags', error);
   }
 };
 
@@ -131,7 +132,7 @@ export const loadTags = async (): Promise<Tag[]> => {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => doc.data() as Tag);
   } catch (error) {
-    console.error('Error loading tags:', error);
+    logError('Error loading tags', 'storage.loadTags', error);
     return [];
   }
 };
@@ -140,7 +141,7 @@ export const saveTimerState = async (timerState: TimerState): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.TIMER_STATE, JSON.stringify(timerState));
   } catch (error) {
-    console.error('Error saving timer state:', error);
+    logError('Error saving timer state', 'storage.saveTimerState', error);
   }
 };
 
@@ -149,7 +150,7 @@ export const loadTimerState = async (): Promise<TimerState | null> => {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.TIMER_STATE);
     return data ? JSON.parse(data) : null;
   } catch (error) {
-    console.error('Error loading timer state:', error);
+    logError('Error loading timer state', 'storage.loadTimerState', error);
     return null;
   }
 };
@@ -158,7 +159,7 @@ export const clearTimerState = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
   } catch (error) {
-    console.error('Error clearing timer state:', error);
+    logError('Error clearing timer state', 'storage.clearTimerState', error);
   }
 };
 
@@ -166,7 +167,7 @@ export const saveSettings = async (settings: Settings): Promise<void> => {
   try {
     await setDoc(doc(db, COLLECTIONS.SETTINGS, 'user_settings'), settings);
   } catch (error) {
-    console.error('Error saving settings:', error);
+    logError('Error saving settings', 'storage.saveSettings', error);
   }
 };
 
@@ -179,7 +180,7 @@ export const loadSettings = async (): Promise<Settings | null> => {
     }
     return null;
   } catch (error) {
-    console.error('Error loading settings:', error);
+    logError('Error loading settings', 'storage.loadSettings', error);
     return null;
   }
 };
@@ -211,7 +212,7 @@ export const exportBackup = async (): Promise<string> => {
     
     return JSON.stringify(backupData, null, 2);
   } catch (error) {
-    console.error('Error exporting backup:', error);
+    logError('Error exporting backup', 'storage.exportBackup', error);
     throw error;
   }
 };
@@ -233,7 +234,7 @@ export const importBackup = async (backupJson: string): Promise<void> => {
       await saveSettings(backupData.settings);
     }
   } catch (error) {
-    console.error('Error importing backup:', error);
+    logError('Error importing backup', 'storage.importBackup', error);
     throw error;
   }
 };

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,15 +11,22 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
 import { APP_VERSION, APP_NAME } from '../constants';
-import { exportBackup, importBackup } from '../utils/storage';
+import { exportBackup } from '../utils/storage';
+import { exportErrorLogs, getErrorLogCount, clearErrorLogs } from '../utils/errorLogger';
 
 const Settings: React.FC = () => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('Settings must be used within AppProvider');
   }
-  const { settings, updateSettings, reloadData } = context;
+  const { settings, updateSettings } = context;
   const [localSettings, setLocalSettings] = useState(settings);
+  const [errorLogCount, setErrorLogCount] = useState(getErrorLogCount());
+
+  // Update error log count when component mounts or comes into focus
+  useEffect(() => {
+    setErrorLogCount(getErrorLogCount());
+  }, []);
 
   const breakDurations = [3, 5, 10, 15, 20, 25, 30];
 
@@ -63,8 +70,57 @@ const Settings: React.FC = () => {
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to export backup. Please try again.');
-      console.error('Export error:', error);
     }
+  };
+
+  const handleExportErrorLogs = async () => {
+    try {
+      const errorLogsJson = exportErrorLogs();
+      
+      if (Platform.OS === 'web') {
+        // For web, create a download link
+        const blob = new Blob([errorLogsJson], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const dateString = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        link.href = url;
+        link.download = `pomodoro-way-error-logs-${dateString}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        Alert.alert('Success', 'Error logs exported successfully!');
+      } else {
+        // For mobile, we would need to use expo-file-system or expo-sharing
+        Alert.alert(
+          'Mobile Support Coming Soon',
+          'Error log export for mobile devices will be available in a future update. Please use the web version for now.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export error logs. Please try again.');
+    }
+  };
+
+  const handleClearErrorLogs = () => {
+    Alert.alert(
+      'Clear Error Logs',
+      'Are you sure you want to clear all error logs?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            clearErrorLogs();
+            setErrorLogCount(0);
+            Alert.alert('Success', 'Error logs cleared successfully!');
+          },
+        },
+      ]
+    );
   };
 
   const handleImportBackup = async () => {
@@ -141,6 +197,26 @@ const Settings: React.FC = () => {
           <TouchableOpacity style={styles.importButton} onPress={handleImportBackup}>
             <MaterialIcons name="upload" size={20} color="#fff" />
             <Text style={styles.backupButtonText}>Import Backup</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <MaterialIcons name="bug-report" size={24} color="#e67e22" />
+          <Text style={styles.sectionTitle}>Error Logs</Text>
+        </View>
+        <Text style={styles.sectionDescription}>
+          Download error logs for debugging and support ({errorLogCount} error{errorLogCount !== 1 ? 's' : ''})
+        </Text>
+        <View style={styles.backupButtons}>
+          <TouchableOpacity style={styles.exportButton} onPress={handleExportErrorLogs}>
+            <MaterialIcons name="download" size={20} color="#fff" />
+            <Text style={styles.backupButtonText}>Download Logs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.clearButton} onPress={handleClearErrorLogs}>
+            <MaterialIcons name="delete" size={20} color="#fff" />
+            <Text style={styles.backupButtonText}>Clear Logs</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -272,6 +348,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  clearButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#e74c3c',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
   },
   loginButton: {
     flex: 1,
