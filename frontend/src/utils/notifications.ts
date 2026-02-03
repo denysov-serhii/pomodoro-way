@@ -34,7 +34,8 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     return true;
   }
   
-  // For other platforms (iOS, web), return true
+  // For non-Android platforms (iOS, web), return true as a no-op
+  // Note: iOS notification permissions would need separate implementation if required
   return true;
 };
 
