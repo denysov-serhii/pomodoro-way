@@ -13,7 +13,7 @@ const TaskSelector: React.FC = () => {
   const [showTaskSelector, setShowTaskSelector] = useState<boolean>(false);
 
   return (
-    <>
+    <View>
       <TouchableOpacity 
         style={styles.taskSelectorButton}
         onPress={() => setShowTaskSelector(true)}
@@ -112,7 +112,7 @@ const TaskSelector: React.FC = () => {
           </View>
         </View>
       </Modal>
-    </>
+    </View>
   );
 };
 
