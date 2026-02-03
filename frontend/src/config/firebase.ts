@@ -14,6 +14,11 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID
 };
 
+console.log("=== Firebase Configuration ===");
+console.log(`API Key: ${firebaseConfig.apiKey ? '[SET]' : '[NOT SET]'}`);
+console.log(`Project ID: ${firebaseConfig.projectId ? '[SET]' : '[NOT SET]'}`);
+console.log("================================");
+
 // Warn if Firebase is not configured properly
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   console.warn(
