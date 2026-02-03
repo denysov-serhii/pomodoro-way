@@ -36,12 +36,13 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     }
   };
 
-  const addTask = async (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros'>) => {
+  const addTask = async (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros' | 'totalMinutes'>) => {
     const newTask: Task = {
       id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
       ...task,
       createdAt: new Date().toISOString(),
       completedPomodoros: 0,
+      totalMinutes: 0,
     };
     const updatedTasks = [...tasks, newTask];
     setTasks(updatedTasks);
@@ -99,10 +100,14 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     await saveTags(updatedTags);
   };
 
-  const incrementTaskPomodoro = async (taskId: string) => {
+  const incrementTaskPomodoro = async (taskId: string, durationMinutes: number) => {
     const updatedTasks = tasks.map(task =>
       task.id === taskId
-        ? { ...task, completedPomodoros: (task.completedPomodoros || 0) + 1 }
+        ? { 
+            ...task, 
+            completedPomodoros: (task.completedPomodoros || 0) + 1,
+            totalMinutes: (task.totalMinutes || 0) + durationMinutes,
+          }
         : task
     );
     setTasks(updatedTasks);
