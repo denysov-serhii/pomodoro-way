@@ -75,12 +75,9 @@ export const sendLocalNotification = async (
 const sanitizeTaskName = (taskName: string): string => {
   // Truncate to 50 characters max
   const maxLength = 50;
-  const truncated = taskName.length > maxLength 
+  return taskName.length > maxLength 
     ? taskName.substring(0, maxLength) + '...' 
     : taskName;
-  
-  // Keep only safe characters: alphanumeric, spaces, and common punctuation
-  return truncated.replace(/[^a-zA-Z0-9\s\-.,!?()]/g, '');
 };
 
 /**
