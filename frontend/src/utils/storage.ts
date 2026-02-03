@@ -1,5 +1,5 @@
 import { db } from '../config/firebase';
-import { collection, getDocs, setDoc, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, setDoc, doc, deleteDoc, query, orderBy, writeBatch } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Task, Project, Tag, TimerState, Settings } from '../types';
 
@@ -18,19 +18,27 @@ const STORAGE_KEYS = {
 
 export const saveTasks = async (tasks: Task[]): Promise<void> => {
   try {
-    // Save each task to Firestore
+    const batch = writeBatch(db);
     const tasksCollection = collection(db, COLLECTIONS.TASKS);
     
-    // Clear existing tasks and save new ones
+    // Get existing task IDs
     const snapshot = await getDocs(tasksCollection);
-    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-    await Promise.all(deletePromises);
+    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
+    const newIds = new Set(tasks.map(task => task.id));
     
-    // Save new tasks
-    const savePromises = tasks.map(task => 
-      setDoc(doc(db, COLLECTIONS.TASKS, task.id), task)
-    );
-    await Promise.all(savePromises);
+    // Delete tasks that no longer exist
+    existingIds.forEach(id => {
+      if (!newIds.has(id)) {
+        batch.delete(doc(db, COLLECTIONS.TASKS, id));
+      }
+    });
+    
+    // Update or create tasks
+    tasks.forEach(task => {
+      batch.set(doc(db, COLLECTIONS.TASKS, task.id), task);
+    });
+    
+    await batch.commit();
   } catch (error) {
     console.error('Error saving tasks:', error);
   }
@@ -50,18 +58,27 @@ export const loadTasks = async (): Promise<Task[]> => {
 
 export const saveProjects = async (projects: Project[]): Promise<void> => {
   try {
+    const batch = writeBatch(db);
     const projectsCollection = collection(db, COLLECTIONS.PROJECTS);
     
-    // Clear existing projects and save new ones
+    // Get existing project IDs
     const snapshot = await getDocs(projectsCollection);
-    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-    await Promise.all(deletePromises);
+    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
+    const newIds = new Set(projects.map(project => project.id));
     
-    // Save new projects
-    const savePromises = projects.map(project => 
-      setDoc(doc(db, COLLECTIONS.PROJECTS, project.id), project)
-    );
-    await Promise.all(savePromises);
+    // Delete projects that no longer exist
+    existingIds.forEach(id => {
+      if (!newIds.has(id)) {
+        batch.delete(doc(db, COLLECTIONS.PROJECTS, id));
+      }
+    });
+    
+    // Update or create projects
+    projects.forEach(project => {
+      batch.set(doc(db, COLLECTIONS.PROJECTS, project.id), project);
+    });
+    
+    await batch.commit();
   } catch (error) {
     console.error('Error saving projects:', error);
   }
@@ -81,18 +98,27 @@ export const loadProjects = async (): Promise<Project[]> => {
 
 export const saveTags = async (tags: Tag[]): Promise<void> => {
   try {
+    const batch = writeBatch(db);
     const tagsCollection = collection(db, COLLECTIONS.TAGS);
     
-    // Clear existing tags and save new ones
+    // Get existing tag IDs
     const snapshot = await getDocs(tagsCollection);
-    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-    await Promise.all(deletePromises);
+    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
+    const newIds = new Set(tags.map(tag => tag.id));
     
-    // Save new tags
-    const savePromises = tags.map(tag => 
-      setDoc(doc(db, COLLECTIONS.TAGS, tag.id), tag)
-    );
-    await Promise.all(savePromises);
+    // Delete tags that no longer exist
+    existingIds.forEach(id => {
+      if (!newIds.has(id)) {
+        batch.delete(doc(db, COLLECTIONS.TAGS, id));
+      }
+    });
+    
+    // Update or create tags
+    tags.forEach(tag => {
+      batch.set(doc(db, COLLECTIONS.TAGS, tag.id), tag);
+    });
+    
+    await batch.commit();
   } catch (error) {
     console.error('Error saving tags:', error);
   }
