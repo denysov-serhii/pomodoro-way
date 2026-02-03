@@ -117,7 +117,7 @@ export const useTimerState = () => {
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
 
-    if (isRunning && timeLeft > 0 && startTime) {
+    if (isRunning && startTime) {
       interval = setInterval(() => {
         // Calculate expected time based on actual elapsed time
         const now = Date.now();
@@ -186,7 +186,7 @@ export const useTimerState = () => {
         clearInterval(interval);
       }
     };
-  }, [isRunning, timeLeft, currentTask, incrementTaskPomodoro, sessionType, completedPomodoros, settings, startTime, initialDuration]);
+  }, [isRunning, currentTask, incrementTaskPomodoro, sessionType, completedPomodoros, settings, startTime, initialDuration]);
 
   // Save timer state whenever it changes
   useEffect(() => {
