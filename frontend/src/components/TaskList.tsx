@@ -72,6 +72,13 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
           )}
 
           <View style={styles.taskMeta}>
+            <View style={styles.pomodoroInfo}>
+              <MaterialIcons name="timer" size={16} color="#e74c3c" />
+              <Text style={styles.pomodoroText}>
+                {item.completedPomodoros || 0}
+              </Text>
+            </View>
+
             {projectName && (
               <View style={styles.projectBadge}>
                 <MaterialIcons name="folder" size={14} color="#3498db" />
@@ -88,13 +95,6 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
                 ))}
               </View>
             )}
-          </View>
-
-          <View style={styles.pomodoroInfo}>
-            <MaterialIcons name="timer" size={16} color="#e74c3c" />
-            <Text style={styles.pomodoroText}>
-              {item.completedPomodoros || 0} pomodoros
-            </Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -207,7 +207,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginBottom: 5,
   },
   projectBadge: {
     flexDirection: 'row',
@@ -245,7 +244,8 @@ const styles = StyleSheet.create({
   pomodoroInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginRight: 8,
+    marginBottom: 3,
   },
   pomodoroText: {
     fontSize: 13,
