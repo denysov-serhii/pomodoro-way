@@ -1,26 +1,6 @@
 # Pomodoro Way
 
-A full-stack monorepo for managing tasks and tracking productivity using the Pomodoro Technique.
-
-## Monorepo Structure
-
-This repository contains:
-
-- **Frontend**: React Native application (Expo) for mobile and web
-- **Backend**: Java Micronaut REST API with native image compilation support
-
-```
-pomodoro-way/
-├── frontend/          # React Native Expo application
-│   ├── src/
-│   ├── App.tsx
-│   └── package.json
-├── backend/           # Java Micronaut REST API
-│   ├── src/
-│   ├── build.gradle
-│   └── Dockerfile
-└── README.md         # This file
-```
+A React Native application for managing tasks and tracking productivity using the Pomodoro Technique with Firebase cloud storage.
 
 ## Features
 
@@ -51,35 +31,39 @@ pomodoro-way/
 - Prevent deletion of tags in use
 
 ### Data Persistence
-- All data is stored locally using AsyncStorage
-- Data persists between app sessions
+- All data is stored in Firebase Firestore cloud database
+- Data syncs across devices
+- Real-time updates
+- Secure and scalable cloud storage
 
 ## Quick Start
 
 ### Using the Build Script
 
-The repository includes a convenient build script to manage both frontend and backend:
+The repository includes a convenient build script to manage the frontend:
 
 ```bash
-# Build everything
-./build.sh all
+# Build frontend (install dependencies)
+./build.sh build
 
-# Build backend only (JVM)
-./build.sh backend
-
-# Build native image (requires GraalVM)
-./build.sh native
-
-# Run backend
-./build.sh run-backend
-
-# Run frontend
-./build.sh run-frontend
+# Run frontend development server
+./build.sh run
 ```
 
 ## Installation and Setup
 
-### Frontend
+### Prerequisites
+
+1. **Firebase Project Setup**
+   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+   - Enable Firestore Database in your project
+   - Copy your Firebase configuration values
+
+2. **Node.js and npm**
+   - Install Node.js (v18 or later recommended)
+   - npm comes bundled with Node.js
+
+### Frontend Setup
 
 1. Navigate to the frontend directory:
 ```bash
@@ -91,87 +75,51 @@ cd frontend
 npm install
 ```
 
-3. Start the application:
+3. Configure Firebase:
+   - Copy `.env.example` to `.env`
+   - Add your Firebase configuration values to `.env`:
+   ```
+   EXPO_PUBLIC_FIREBASE_API_KEY=your-api-key
+   EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   EXPO_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+   EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+   EXPO_PUBLIC_FIREBASE_APP_ID=your-app-id
+   ```
+
+4. Start the application:
 ```bash
 npm start
 ```
 
-4. Run on your platform:
+5. Run on your platform:
 - Press `a` for Android
 - Press `i` for iOS (macOS only)
 - Press `w` for web
 
-### Backend
-
-1. Navigate to the backend directory:
-```bash
-cd backend
-```
-
-2. Run the application (JVM mode):
-```bash
-./gradlew run
-```
-
-3. Build native image (requires GraalVM):
-```bash
-./gradlew nativeCompile
-./build/native/nativeCompile/pomodoro-way-backend
-```
-
-For detailed backend setup and native image compilation, see [backend/README.md](backend/README.md).
-
-## Quick Start with Docker (Backend)
-
-```bash
-# Build and run using Docker Compose
-docker-compose up --build
-
-# Or build manually
-cd backend
-docker build -t pomodoro-way-backend .
-docker run -p 8080:8080 pomodoro-way-backend
-```
-
 ## Project Structure
 
-### Frontend Structure
-
-### Frontend Structure
-
 ```
-frontend/
-├── src/
-│   ├── components/
-│   │   ├── PomodoroTimer.tsx      # Timer component with duration options
-│   │   ├── TaskList.tsx            # Task list display and management
-│   │   ├── AddTaskModal.tsx        # Modal for creating tasks
-│   │   ├── ProjectsManager.tsx     # Project management interface
-│   │   └── TagsManager.tsx         # Tag management interface
-│   ├── contexts/
-│   │   └── AppContext.tsx          # Global state management
-│   └── utils/
-│       └── storage.ts              # AsyncStorage utilities
-├── App.tsx                         # Main application component
-└── package.json
-```
-
-### Backend Structure
-
-```
-backend/
-├── src/
-│   ├── main/
-│   │   ├── java/com/pomodorowork/
-│   │   │   ├── Application.java
-│   │   │   ├── controller/        # REST API controllers
-│   │   │   └── domain/            # Domain models
-│   │   └── resources/
-│   │       └── application.yml    # Micronaut configuration
-│   └── test/                      # Unit tests
-├── build.gradle                    # Gradle build script with native image support
-├── gradlew                         # Gradle wrapper
-└── Dockerfile                      # Multi-stage native image build
+pomodoro-way/
+├── frontend/                    # React Native Expo application
+│   ├── src/
+│   │   ├── components/          # UI components
+│   │   │   ├── PomodoroTimer.tsx
+│   │   │   ├── TaskList.tsx
+│   │   │   ├── AddTaskModal.tsx
+│   │   │   ├── ProjectsManager.tsx
+│   │   │   └── TagsManager.tsx
+│   │   ├── contexts/
+│   │   │   └── AppContext.tsx   # Global state management
+│   │   ├── config/
+│   │   │   └── firebase.ts      # Firebase configuration
+│   │   └── utils/
+│   │       └── storage.ts       # Firestore utilities
+│   ├── App.tsx
+│   ├── package.json
+│   └── .env.example             # Environment variables template
+├── build.sh                     # Build script
+└── README.md
 ```
 
 ## Usage
@@ -202,64 +150,36 @@ backend/
 
 ## Technologies Used
 
-### Frontend
-- React Native
-- Expo
-- TypeScript
-- AsyncStorage for data persistence
-- React Context API for state management
-- Expo Vector Icons for UI icons
-
-### Backend
-- Java 17
-- Micronaut Framework 4.4.2
-- GraalVM Native Image
-- Gradle 8.5
-- RESTful API design
-
-## API Integration
-
-The backend provides REST API endpoints that can be integrated with the frontend:
-
-- **Tasks API**: `/api/tasks`
-- **Projects API**: `/api/projects`
-- **Tags API**: `/api/tags`
-- **Pomodoro Sessions API**: `/api/pomodoros`
-- **Health Check**: `/api/health`
-
-See [backend/README.md](backend/README.md) for complete API documentation.
+- **React Native** - Cross-platform mobile framework
+- **Expo** - Development toolchain and runtime
+- **TypeScript** - Type-safe JavaScript
+- **Firebase Firestore** - Cloud NoSQL database for data persistence
+- **React Context API** - State management
+- **Expo Vector Icons** - UI icons
+- **AsyncStorage** - Local temporary storage (timer state)
 
 ## Development
 
-### Frontend Development
 ```bash
 cd frontend
 npm start
 ```
 
-### Backend Development
-```bash
-cd backend
-./gradlew run
-```
-
-The backend will be available at `http://localhost:8080`.
+The development server will start and you can access the app on:
+- Web browser (press `w`)
+- Android device/emulator (press `a`)
+- iOS device/simulator (press `i`, macOS only)
 
 ## Building for Production
 
-### Frontend
-Follow the Expo build process for your target platform.
+Follow the [Expo build process](https://docs.expo.dev/build/setup/) for your target platform:
 
-### Backend Native Image
 ```bash
-cd backend
-./gradlew nativeCompile
+# For EAS Build
+npm install -g eas-cli
+eas build --platform ios
+eas build --platform android
 ```
-
-This creates a standalone native executable with:
-- Fast startup time (~0.1s vs several seconds for JVM)
-- Low memory footprint (~50MB vs several hundred MB)
-- No JVM required for deployment
 
 ## License
 
