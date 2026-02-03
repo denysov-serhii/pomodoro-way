@@ -136,8 +136,8 @@ export const useTimerState = () => {
           if (sessionType === 'pomodoro') {
             // Pomodoro completed
             if (currentTask) {
-              const actualMinutes = Math.round(sessionDuration / 60);
-              incrementTaskPomodoro(currentTask.id, actualMinutes);
+              const sessionMinutes = Math.round(sessionDuration / 60);
+              incrementTaskPomodoro(currentTask.id, sessionMinutes);
             }
             const newCompletedPomodoros = completedPomodoros + 1;
             setCompletedPomodoros(newCompletedPomodoros);
@@ -191,7 +191,7 @@ export const useTimerState = () => {
         clearInterval(interval);
       }
     };
-  }, [isRunning, currentTask, incrementTaskPomodoro, sessionType, completedPomodoros, settings, startTime, initialDuration]);
+  }, [isRunning, currentTask, incrementTaskPomodoro, sessionType, completedPomodoros, settings, startTime, initialDuration, sessionDuration]);
 
   // Save timer state whenever it changes
   useEffect(() => {
