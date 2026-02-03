@@ -3,6 +3,8 @@
  * Collects and stores application errors for debugging and support purposes
  */
 
+import { APP_VERSION } from '../constants';
+
 export interface ErrorLog {
   timestamp: string;
   message: string;
@@ -74,7 +76,7 @@ export const clearErrorLogs = (): void => {
 export const exportErrorLogs = (): string => {
   const exportData = {
     exportDate: new Date().toISOString(),
-    appVersion: '1.0.0', // Could import from constants
+    appVersion: APP_VERSION,
     totalErrors: errorLogs.length,
     errors: errorLogs,
   };

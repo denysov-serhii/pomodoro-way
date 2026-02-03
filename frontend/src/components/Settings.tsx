@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,11 @@ const Settings: React.FC = () => {
   const { settings, updateSettings } = context;
   const [localSettings, setLocalSettings] = useState(settings);
   const [errorLogCount, setErrorLogCount] = useState(getErrorLogCount());
+
+  // Update error log count when component mounts or comes into focus
+  useEffect(() => {
+    setErrorLogCount(getErrorLogCount());
+  }, []);
 
   const breakDurations = [3, 5, 10, 15, 20, 25, 30];
 
@@ -77,9 +82,9 @@ const Settings: React.FC = () => {
         const blob = new Blob([errorLogsJson], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        const exportDate = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const dateString = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
         link.href = url;
-        link.download = `pomodoro-way-error-logs-${exportDate}.json`;
+        link.download = `pomodoro-way-error-logs-${dateString}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
