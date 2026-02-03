@@ -68,6 +68,22 @@ export const sendLocalNotification = async (
 };
 
 /**
+ * Sanitize and truncate task name for notification
+ * @param taskName - Task name to sanitize
+ * @returns Sanitized task name
+ */
+const sanitizeTaskName = (taskName: string): string => {
+  // Truncate to 50 characters max
+  const maxLength = 50;
+  const truncated = taskName.length > maxLength 
+    ? taskName.substring(0, maxLength) + '...' 
+    : taskName;
+  
+  // Remove any problematic characters (keep alphanumeric, spaces, and common punctuation)
+  return truncated.replace(/[^\w\s\-.,!?()]/g, '');
+};
+
+/**
  * Send notification when pomodoro completes
  * @param taskName - Optional task name
  */
@@ -76,7 +92,7 @@ export const sendPomodoroCompleteNotification = async (
 ): Promise<void> => {
   const title = '🍅 Pomodoro Complete!';
   const body = taskName 
-    ? `Great work on "${taskName}"! Time for a break.`
+    ? `Great work on "${sanitizeTaskName(taskName)}"! Time for a break.`
     : 'Great work! Time for a break.';
   
   await sendLocalNotification(title, body);
