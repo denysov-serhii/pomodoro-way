@@ -9,6 +9,7 @@ interface TimerState {
   timeLeft: number;
   isRunning: boolean;
   initialDuration: number;
+  sessionDuration: number;
   sessionType: 'pomodoro' | 'shortBreak' | 'longBreak';
   completedPomodoros: number;
   setIsRunning: (value: boolean) => void;
@@ -16,6 +17,7 @@ interface TimerState {
   setIsCompleted: (value: boolean) => void;
   setStartTime: (value: number | null) => void;
   setInitialDuration: (value: number) => void;
+  setSessionDuration: (value: number) => void;
   setSessionType: (value: 'pomodoro' | 'shortBreak' | 'longBreak') => void;
   setSelectedDuration: (value: number) => void;
   setCompletedPomodoros: (value: number) => void;
@@ -35,7 +37,7 @@ export const useTimerControls = (timerState: TimerState) => {
     selectedDuration,
     timeLeft,
     isRunning,
-    initialDuration,
+    sessionDuration,
     sessionType,
     completedPomodoros,
     setIsRunning,
@@ -43,6 +45,7 @@ export const useTimerControls = (timerState: TimerState) => {
     setIsCompleted,
     setStartTime,
     setInitialDuration,
+    setSessionDuration,
     setSessionType,
     setSelectedDuration,
     setCompletedPomodoros,
@@ -54,18 +57,26 @@ export const useTimerControls = (timerState: TimerState) => {
   const handleStart = () => {
     setIsRunning(true);
     setIsCompleted(false);
+    // Set startTime based on current timeLeft to handle resume after pause
     setStartTime(Date.now());
     setInitialDuration(timeLeft);
+    // Set sessionDuration only on first start (not on resume)
+    if (timeLeft === selectedDuration * 60) {
+      setSessionDuration(timeLeft);
+    }
   };
 
   const handlePause = () => {
     setIsRunning(false);
+    // startTime will be recalculated on resume
+    setStartTime(null);
   };
 
   const handleReset = () => {
     setIsRunning(false);
     setTimeLeft(selectedDuration * 60);
     setInitialDuration(selectedDuration * 60);
+    setSessionDuration(selectedDuration * 60);
     setIsCompleted(false);
     setStartTime(null);
     clearTimerState();
@@ -77,7 +88,7 @@ export const useTimerControls = (timerState: TimerState) => {
       return;
     }
 
-    const timeSpentSeconds = initialDuration - timeLeft;
+    const timeSpentSeconds = sessionDuration - timeLeft;
     const timeSpentMinutes = Math.floor(timeSpentSeconds / 60);
     const timeSpentDisplay = timeSpentMinutes > 0 
       ? `${timeSpentMinutes} minute${timeSpentMinutes !== 1 ? 's' : ''}`
@@ -115,6 +126,7 @@ export const useTimerControls = (timerState: TimerState) => {
           setSelectedDuration(breakDuration);
           setTimeLeft(breakDuration * 60);
           setInitialDuration(breakDuration * 60);
+          setSessionDuration(breakDuration * 60);
           setIsCompleted(false);
           setIsRunning(false); // Break is paused, user must start it
           setStartTime(null);
