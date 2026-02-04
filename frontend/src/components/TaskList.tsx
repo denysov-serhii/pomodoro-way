@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  GestureResponderEvent,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
@@ -177,7 +178,7 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
           <MaterialIcons name="chevron-right" size={24} color="#95a5a6" />
         </View>
         <TouchableOpacity 
-          onPress={(e: any) => {
+          onPress={(e: GestureResponderEvent) => {
             e.stopPropagation();
             handleDeleteFolder(folder.id, folder.name);
           }}
