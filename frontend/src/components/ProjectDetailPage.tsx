@@ -5,6 +5,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  GestureResponderEvent,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
@@ -71,10 +72,20 @@ const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId, onBack
               {item.title}
             </Text>
             <View style={styles.taskActions}>
-              <TouchableOpacity onPress={() => setEditingTask(item)}>
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  setEditingTask(item);
+                }}
+              >
                 <MaterialIcons name="edit" size={24} color="#3498db" />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDeleteTask(item.id, item.title)}>
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  handleDeleteTask(item.id, item.title);
+                }}
+              >
                 <MaterialIcons name="delete" size={24} color="#e74c3c" />
               </TouchableOpacity>
             </View>
