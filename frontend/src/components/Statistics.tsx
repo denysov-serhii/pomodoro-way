@@ -29,6 +29,8 @@ interface TagWithStats extends Tag {
 
 type TimePeriod = 'day' | 'week' | 'month' | 'year' | 'all';
 
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 const Statistics: React.FC = () => {
   const context = useContext(AppContext);
   if (!context) {
@@ -54,15 +56,15 @@ const Statistics: React.FC = () => {
         break;
       case 'week':
         // Last 7 days
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 7 * MILLISECONDS_PER_DAY);
         break;
       case 'month':
         // Last 30 days
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 30 * MILLISECONDS_PER_DAY);
         break;
       case 'year':
         // Last 365 days
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 365 * MILLISECONDS_PER_DAY);
         break;
       default:
         return tasks;
@@ -81,15 +83,19 @@ const Statistics: React.FC = () => {
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
 
+    // Count unique projects and tags that have tasks in the selected period
+    const uniqueProjectIds = new Set(filteredTasks.filter(t => t.projectId).map(t => t.projectId));
+    const uniqueTagIds = new Set(filteredTasks.flatMap(t => t.tags || []));
+
     return {
       totalPomodoros,
       totalHours,
       remainingMinutes,
       totalTasks: filteredTasks.length,
-      totalProjects: projects.length,
-      totalTags: tags.length,
+      totalProjects: uniqueProjectIds.size,
+      totalTags: uniqueTagIds.size,
     };
-  }, [filteredTasks, projects, tags]);
+  }, [filteredTasks]);
 
   // Calculate task statistics
   const taskStats = useMemo((): TaskWithMinutes[] => {
