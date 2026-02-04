@@ -77,6 +77,7 @@ const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId, onBack
                   e.stopPropagation();
                   setEditingTask(item);
                 }}
+                style={styles.actionButton}
               >
                 <MaterialIcons name="edit" size={24} color="#3498db" />
               </TouchableOpacity>
@@ -85,6 +86,7 @@ const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId, onBack
                   e.stopPropagation();
                   handleDeleteTask(item.id, item.title);
                 }}
+                style={styles.actionButton}
               >
                 <MaterialIcons name="delete" size={24} color="#e74c3c" />
               </TouchableOpacity>
@@ -266,6 +268,9 @@ const styles = StyleSheet.create({
   taskActions: {
     flexDirection: 'row',
     gap: 8,
+  },
+  actionButton: {
+    padding: 2,
   },
   taskTitle: {
     fontSize: 16,
