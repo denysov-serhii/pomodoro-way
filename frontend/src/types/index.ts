@@ -3,6 +3,7 @@ export interface Task {
   title: string;
   description?: string;
   projectId?: string | null;
+  folderId?: string | null;
   tags?: string[];
   createdAt: string;
   completedPomodoros: number;
@@ -10,6 +11,12 @@ export interface Task {
 }
 
 export interface Project {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface Folder {
   id: string;
   name: string;
   createdAt: string;
@@ -54,6 +61,7 @@ export interface Settings {
 export interface AppContextType {
   tasks: Task[];
   projects: Project[];
+  folders: Folder[];
   tags: Tag[];
   currentTask: Task | null;
   settings: Settings;
@@ -63,6 +71,8 @@ export interface AppContextType {
   deleteTask: (taskId: string) => Promise<void>;
   addProject: (project: Omit<Project, 'id' | 'createdAt'>) => Promise<void>;
   deleteProject: (projectId: string) => Promise<void>;
+  addFolder: (folder: Omit<Folder, 'id' | 'createdAt'>) => Promise<void>;
+  deleteFolder: (folderId: string) => Promise<void>;
   addTag: (tag: Omit<Tag, 'id' | 'createdAt'>) => Promise<void>;
   deleteTag: (tagId: string) => Promise<void>;
   incrementTaskPomodoro: (taskId: string, durationMinutes: number) => Promise<void>;

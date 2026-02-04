@@ -21,8 +21,14 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
   if (!context) {
     throw new Error('TaskList must be used within AppProvider');
   }
-  const { tasks, projects, tags, currentTask, setCurrentTask, deleteTask } = context;
+  const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
+
+  const getFolderName = (folderId?: string | null): string | null => {
+    if (!folderId) return null;
+    const folder = folders.find((f) => f.id === folderId);
+    return folder ? folder.name : null;
+  };
 
   const getProjectName = (projectId?: string | null): string | null => {
     if (!projectId) return null;
@@ -49,6 +55,7 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
 
   const renderTask = ({ item }: { item: Task }) => {
     const isSelected = currentTask?.id === item.id;
+    const folderName = getFolderName(item.folderId);
     const projectName = getProjectName(item.projectId);
     const tagNames = getTagNames(item.tags);
 
@@ -81,6 +88,13 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
                 {item.completedPomodoros || 0}
               </Text>
             </View>
+
+            {folderName && (
+              <View style={styles.folderBadge}>
+                <MaterialIcons name="folder" size={14} color="#f39c12" />
+                <Text style={styles.folderText}>{folderName}</Text>
+              </View>
+            )}
 
             {projectName && (
               <View style={styles.projectBadge}>
@@ -210,6 +224,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
+  },
+  folderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef5e7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginRight: 6,
+    marginBottom: 3,
+  },
+  folderText: {
+    fontSize: 12,
+    color: '#f39c12',
+    marginLeft: 4,
+    fontWeight: '600',
   },
   projectBadge: {
     flexDirection: 'row',

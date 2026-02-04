@@ -23,11 +23,12 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
   if (!context) {
     throw new Error('AddTaskModal must be used within AppProvider');
   }
-  const { addTask, projects, tags } = context;
+  const { addTask, projects, folders, tags } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const handleSave = () => {
@@ -44,6 +45,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
       title: title.trim(),
       description: description.trim(),
       projectId: selectedProject,
+      folderId: selectedFolder,
       tags: selectedTags,
     });
 
@@ -51,6 +53,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
     setTitle('');
     setDescription('');
     setSelectedProject(null);
+    setSelectedFolder(null);
     setSelectedTags([]);
     onClose();
   };
@@ -95,6 +98,51 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
                 multiline
                 numberOfLines={4}
               />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Folder</Text>
+              {folders.length === 0 ? (
+                <Text style={styles.emptyMessage}>No folders available</Text>
+              ) : (
+                <View style={styles.optionsContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      selectedFolder === null && styles.optionButtonSelected,
+                    ]}
+                    onPress={() => setSelectedFolder(null)}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        selectedFolder === null && styles.optionTextSelected,
+                      ]}
+                    >
+                      No Folder
+                    </Text>
+                  </TouchableOpacity>
+                  {folders.map((folder) => (
+                    <TouchableOpacity
+                      key={folder.id}
+                      style={[
+                        styles.optionButton,
+                        selectedFolder === folder.id && styles.optionButtonSelected,
+                      ]}
+                      onPress={() => setSelectedFolder(folder.id)}
+                    >
+                      <Text
+                        style={[
+                          styles.optionText,
+                          selectedFolder === folder.id && styles.optionTextSelected,
+                        ]}
+                      >
+                        {folder.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
 
             <View style={styles.inputGroup}>

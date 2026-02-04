@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { saveTasks, loadTasks, saveProjects, loadProjects, saveTags, loadTags, saveSettings, loadSettings } from '../utils/storage';
-import { Task, Project, Tag, AppContextType, Settings } from '../types';
+import { saveTasks, loadTasks, saveProjects, loadProjects, saveFolders, loadFolders, saveTags, loadTags, saveSettings, loadSettings } from '../utils/storage';
+import { Task, Project, Folder, Tag, AppContextType, Settings } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -11,6 +11,7 @@ interface AppProviderProps {
 export const AppProvider = ({ children }: AppProviderProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
   const [settings, setSettings] = useState<Settings>({
@@ -26,10 +27,12 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const loadData = async () => {
     const loadedTasks = await loadTasks();
     const loadedProjects = await loadProjects();
+    const loadedFolders = await loadFolders();
     const loadedTags = await loadTags();
     const loadedSettings = await loadSettings();
     setTasks(loadedTasks);
     setProjects(loadedProjects);
+    setFolders(loadedFolders);
     setTags(loadedTags);
     if (loadedSettings) {
       setSettings(loadedSettings);
@@ -83,6 +86,23 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     await saveProjects(updatedProjects);
   };
 
+  const addFolder = async (folder: Omit<Folder, 'id' | 'createdAt'>) => {
+    const newFolder: Folder = {
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
+      ...folder,
+      createdAt: new Date().toISOString(),
+    };
+    const updatedFolders = [...folders, newFolder];
+    setFolders(updatedFolders);
+    await saveFolders(updatedFolders);
+  };
+
+  const deleteFolder = async (folderId: string) => {
+    const updatedFolders = folders.filter(folder => folder.id !== folderId);
+    setFolders(updatedFolders);
+    await saveFolders(updatedFolders);
+  };
+
   const addTag = async (tag: Omit<Tag, 'id' | 'createdAt'>) => {
     const newTag: Tag = {
       id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
@@ -128,6 +148,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       value={{
         tasks,
         projects,
+        folders,
         tags,
         currentTask,
         settings,
@@ -137,6 +158,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         deleteTask,
         addProject,
         deleteProject,
+        addFolder,
+        deleteFolder,
         addTag,
         deleteTag,
         incrementTaskPomodoro,
