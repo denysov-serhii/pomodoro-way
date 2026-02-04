@@ -61,12 +61,37 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   const deleteTask = async (taskId: string) => {
+    // Check if task has tracked time
+    const task = tasks.find(t => t.id === taskId);
+    if (task && (task.completedPomodoros > 0 || task.totalMinutes > 0)) {
+      throw new Error('Cannot delete task with tracked time. Please complete/archive the task instead.');
+    }
+    
     const updatedTasks = tasks.filter(task => task.id !== taskId);
     setTasks(updatedTasks);
     await saveTasks(updatedTasks);
     if (currentTask?.id === taskId) {
       setCurrentTask(null);
     }
+  };
+
+  const completeTask = async (taskId: string) => {
+    const updatedTasks = tasks.map(task =>
+      task.id === taskId ? { ...task, isCompleted: true, completedAt: new Date().toISOString() } : task
+    );
+    setTasks(updatedTasks);
+    await saveTasks(updatedTasks);
+    if (currentTask?.id === taskId) {
+      setCurrentTask(null);
+    }
+  };
+
+  const toggleStarTask = async (taskId: string) => {
+    const updatedTasks = tasks.map(task =>
+      task.id === taskId ? { ...task, isStarred: !task.isStarred } : task
+    );
+    setTasks(updatedTasks);
+    await saveTasks(updatedTasks);
   };
 
   const addProject = async (project: Omit<Project, 'id' | 'createdAt'>) => {
@@ -163,6 +188,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         addTask,
         updateTask,
         deleteTask,
+        completeTask,
+        toggleStarTask,
         addProject,
         deleteProject,
         addFolder,

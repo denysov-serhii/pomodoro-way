@@ -15,6 +15,7 @@ import { AppContext } from '../contexts/AppContext';
 import { APP_VERSION, APP_NAME } from '../constants';
 import { exportBackup } from '../utils/storage';
 import { exportErrorLogs, getErrorLogCount, clearErrorLogs } from '../utils/errorLogger';
+import ArchivePage from './ArchivePage';
 
 const Settings: React.FC = () => {
   const context = useContext(AppContext);
@@ -24,6 +25,12 @@ const Settings: React.FC = () => {
   const { settings, updateSettings } = context;
   const [localSettings, setLocalSettings] = useState(settings);
   const [errorLogCount, setErrorLogCount] = useState(getErrorLogCount());
+  const [showArchive, setShowArchive] = useState(false);
+
+  // If archive is shown, render the archive page
+  if (showArchive) {
+    return <ArchivePage onBack={() => setShowArchive(false)} />;
+  }
 
   // Update error log count when component mounts or comes into focus
   useEffect(() => {
@@ -217,6 +224,20 @@ const Settings: React.FC = () => {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
+          <MaterialIcons name="archive" size={24} color="#16a085" />
+          <Text style={styles.sectionTitle}>Archive</Text>
+        </View>
+        <Text style={styles.sectionDescription}>
+          View completed and archived tasks
+        </Text>
+        <TouchableOpacity style={styles.archiveButton} onPress={() => setShowArchive(true)}>
+          <MaterialIcons name="archive" size={20} color="#fff" />
+          <Text style={styles.backupButtonText}>View Archive</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
           <MaterialIcons name="backup" size={24} color="#9b59b6" />
           <Text style={styles.sectionTitle}>Backup & Restore</Text>
         </View>
@@ -357,6 +378,15 @@ const styles = StyleSheet.create({
   backupButtons: {
     flexDirection: 'row',
     gap: 10,
+  },
+  archiveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#16a085',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
   },
   exportButton: {
     flex: 1,
