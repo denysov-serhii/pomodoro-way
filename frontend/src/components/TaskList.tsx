@@ -13,6 +13,7 @@ import { AppContext } from '../contexts/AppContext';
 import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import FolderDetailPage from './FolderDetailPage';
+import EditTaskModal from './EditTaskModal';
 import { Task, Folder } from '../types';
 import { sortTasks } from '../utils/taskSorting';
 
@@ -34,6 +35,7 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>('');
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // If a folder is selected, show folder detail page
   if (selectedFolderId) {
@@ -160,6 +162,15 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
               {item.title}
             </Text>
             <View style={styles.taskActions}>
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  setEditingTask(item);
+                }}
+                style={styles.actionButton}
+              >
+                <MaterialIcons name="edit" size={24} color="#3498db" />
+              </TouchableOpacity>
               <TouchableOpacity 
                 onPress={(e: GestureResponderEvent) => {
                   e.stopPropagation();
@@ -308,6 +319,14 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
           renderItem={renderItem}
           keyExtractor={(item) => item.type === 'folder' ? `folder-${item.data.id}` : `task-${item.data.id}`}
           contentContainerStyle={styles.listContainer}
+        />
+      )}
+
+      {editingTask && (
+        <EditTaskModal
+          visible={true}
+          onClose={() => setEditingTask(null)}
+          task={editingTask}
         />
       )}
 

@@ -5,12 +5,14 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  GestureResponderEvent,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
 import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import AddTaskModal from './AddTaskModal';
+import EditTaskModal from './EditTaskModal';
 import { Task } from '../types';
 
 interface ProjectDetailPageProps {
@@ -26,6 +28,7 @@ const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId, onBack
   const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const project = projects.find(p => p.id === projectId);
   const projectTasks = tasks.filter(task => task.projectId === projectId);
@@ -68,9 +71,26 @@ const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId, onBack
             <Text style={[styles.taskTitle, isSelected && styles.taskTitleSelected]}>
               {item.title}
             </Text>
-            <TouchableOpacity onPress={() => handleDeleteTask(item.id, item.title)}>
-              <MaterialIcons name="delete" size={24} color="#e74c3c" />
-            </TouchableOpacity>
+            <View style={styles.taskActions}>
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  setEditingTask(item);
+                }}
+                style={styles.actionButton}
+              >
+                <MaterialIcons name="edit" size={24} color="#3498db" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  handleDeleteTask(item.id, item.title);
+                }}
+                style={styles.actionButton}
+              >
+                <MaterialIcons name="delete" size={24} color="#e74c3c" />
+              </TouchableOpacity>
+            </View>
           </View>
           
           {item.description && (
@@ -162,6 +182,14 @@ const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId, onBack
         defaultProjectId={projectId}
       />
 
+      {editingTask && (
+        <EditTaskModal
+          visible={true}
+          onClose={() => setEditingTask(null)}
+          task={editingTask}
+        />
+      )}
+
       <ConfirmDialog
         visible={dialogState.visible}
         title={dialogState.title}
@@ -236,6 +264,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 6,
+  },
+  taskActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 2,
   },
   taskTitle: {
     fontSize: 16,
