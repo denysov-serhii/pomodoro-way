@@ -27,15 +27,15 @@ const Settings: React.FC = () => {
   const [errorLogCount, setErrorLogCount] = useState(getErrorLogCount());
   const [showArchive, setShowArchive] = useState(false);
 
-  // If archive is shown, render the archive page
-  if (showArchive) {
-    return <ArchivePage onBack={() => setShowArchive(false)} />;
-  }
-
   // Update error log count when component mounts or comes into focus
   useEffect(() => {
     setErrorLogCount(getErrorLogCount());
   }, []);
+
+  // If archive is shown, render the archive page
+  if (showArchive) {
+    return <ArchivePage onBack={() => setShowArchive(false)} />;
+  }
 
   const breakDurations = [3, 5, 10, 15, 20, 25, 30];
 
