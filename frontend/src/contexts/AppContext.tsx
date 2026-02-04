@@ -98,6 +98,13 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   const deleteFolder = async (folderId: string) => {
+    // Remove folderId from tasks before deleting the folder
+    const updatedTasks = tasks.map(task =>
+      task.folderId === folderId ? { ...task, folderId: null } : task
+    );
+    setTasks(updatedTasks);
+    await saveTasks(updatedTasks);
+    
     const updatedFolders = folders.filter(folder => folder.id !== folderId);
     setFolders(updatedFolders);
     await saveFolders(updatedFolders);

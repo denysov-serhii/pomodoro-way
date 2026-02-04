@@ -39,19 +39,9 @@ const FoldersManager: React.FC = () => {
   };
 
   const handleDeleteFolder = (folderId: string, folderName: string) => {
-    const folderTasks = tasks.filter((task) => task.folderId === folderId);
-    if (folderTasks.length > 0) {
-      showDialog({
-        title: 'Cannot Delete',
-        message: `This folder has ${folderTasks.length} task(s). Please reassign or delete the tasks first.`,
-        showCancel: false,
-      });
-      return;
-    }
-
     showDialog({
       title: 'Delete Folder',
-      message: `Are you sure you want to delete "${folderName}"?`,
+      message: `Are you sure you want to delete "${folderName}"? Tasks in this folder will be moved to no folder.`,
       confirmText: 'Delete',
       onConfirm: () => deleteFolder(folderId),
     });

@@ -79,7 +79,7 @@ const ProjectsManager: React.FC = () => {
           </View>
         </View>
         <TouchableOpacity 
-          onPress={(e) => {
+          onPress={(e: any) => {
             e.stopPropagation();
             handleDeleteProject(item.id, item.name);
           }}

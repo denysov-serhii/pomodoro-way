@@ -60,7 +60,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose, defaultPr
     // Reset form
     setTitle('');
     setDescription('');
-    setSelectedProject(null);
+    setSelectedProject(defaultProjectId || null);
     setSelectedFolder(null);
     setSelectedTags([]);
     onClose();
