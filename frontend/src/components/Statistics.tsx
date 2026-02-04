@@ -1,10 +1,11 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   FlatList,
+  TouchableOpacity,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
@@ -26,6 +27,10 @@ interface TagWithStats extends Tag {
   minutes: number;
 }
 
+type TimePeriod = 'day' | 'week' | 'month' | 'year' | 'all';
+
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 const Statistics: React.FC = () => {
   const context = useContext(AppContext);
   if (!context) {
@@ -33,37 +38,79 @@ const Statistics: React.FC = () => {
   }
   const { tasks, projects, tags } = context;
 
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('all');
+
+  // Filter tasks based on selected time period
+  const filteredTasks = useMemo(() => {
+    if (selectedPeriod === 'all') {
+      return tasks;
+    }
+
+    const now = new Date();
+    let startDate: Date;
+
+    switch (selectedPeriod) {
+      case 'day':
+        // Today - from midnight
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'week':
+        // Last 7 days
+        startDate = new Date(now.getTime() - 7 * MILLISECONDS_PER_DAY);
+        break;
+      case 'month':
+        // Last 30 days
+        startDate = new Date(now.getTime() - 30 * MILLISECONDS_PER_DAY);
+        break;
+      case 'year':
+        // Last 365 days
+        startDate = new Date(now.getTime() - 365 * MILLISECONDS_PER_DAY);
+        break;
+      default:
+        return tasks;
+    }
+
+    return tasks.filter(task => {
+      const taskDate = new Date(task.createdAt);
+      return taskDate >= startDate;
+    });
+  }, [tasks, selectedPeriod]);
+
   // Calculate total statistics
   const stats = useMemo(() => {
-    const totalPomodoros = tasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
-    const totalMinutes = tasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
+    const totalPomodoros = filteredTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
+    const totalMinutes = filteredTasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
+
+    // Count unique projects and tags that have tasks in the selected period
+    const uniqueProjectIds = new Set(filteredTasks.filter(t => t.projectId).map(t => t.projectId));
+    const uniqueTagIds = new Set(filteredTasks.flatMap(t => t.tags || []));
 
     return {
       totalPomodoros,
       totalHours,
       remainingMinutes,
-      totalTasks: tasks.length,
-      totalProjects: projects.length,
-      totalTags: tags.length,
+      totalTasks: filteredTasks.length,
+      totalProjects: uniqueProjectIds.size,
+      totalTags: uniqueTagIds.size,
     };
-  }, [tasks, projects, tags]);
+  }, [filteredTasks]);
 
   // Calculate task statistics
   const taskStats = useMemo((): TaskWithMinutes[] => {
-    return tasks
+    return filteredTasks
       .map(task => ({
         ...task,
         minutes: task.totalMinutes || 0,
       }))
       .sort((a, b) => b.completedPomodoros - a.completedPomodoros);
-  }, [tasks]);
+  }, [filteredTasks]);
 
   // Calculate project statistics
   const projectStats = useMemo((): ProjectWithStats[] => {
     return projects.map(project => {
-      const projectTasks = tasks.filter(task => task.projectId === project.id);
+      const projectTasks = filteredTasks.filter(task => task.projectId === project.id);
       const pomodoros = projectTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
       const minutes = projectTasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
       return {
@@ -73,12 +120,12 @@ const Statistics: React.FC = () => {
         minutes,
       };
     }).sort((a, b) => b.pomodoros - a.pomodoros);
-  }, [projects, tasks]);
+  }, [projects, filteredTasks]);
 
   // Calculate tag statistics
   const tagStats = useMemo((): TagWithStats[] => {
     return tags.map(tag => {
-      const tagTasks = tasks.filter(task => task.tags && task.tags.includes(tag.id));
+      const tagTasks = filteredTasks.filter(task => task.tags && task.tags.includes(tag.id));
       const pomodoros = tagTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
       const minutes = tagTasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
       return {
@@ -88,7 +135,7 @@ const Statistics: React.FC = () => {
         minutes,
       };
     }).sort((a, b) => b.pomodoros - a.pomodoros);
-  }, [tags, tasks]);
+  }, [tags, filteredTasks]);
 
   const formatTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -135,8 +182,46 @@ const Statistics: React.FC = () => {
     </View>
   );
 
+  const renderPeriodButton = (period: TimePeriod, label: string) => (
+    <TouchableOpacity
+      key={period}
+      style={[
+        styles.periodButton,
+        selectedPeriod === period && styles.periodButtonActive,
+      ]}
+      onPress={() => setSelectedPeriod(period)}
+    >
+      <Text
+        style={[
+          styles.periodButtonText,
+          selectedPeriod === period && styles.periodButtonTextActive,
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <ScrollView style={styles.container}>
+      {/* Time Period Filter */}
+      <View style={styles.filterSection}>
+        <Text style={styles.filterTitle}>Time Period</Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.periodScrollView}
+        >
+          <View style={styles.periodButtons}>
+            {renderPeriodButton('day', 'Today')}
+            {renderPeriodButton('week', 'Week')}
+            {renderPeriodButton('month', 'Month')}
+            {renderPeriodButton('year', 'Year')}
+            {renderPeriodButton('all', 'All Time')}
+          </View>
+        </ScrollView>
+      </View>
+
       {/* Overall Statistics */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Overall Statistics</Text>
@@ -218,6 +303,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  filterSection: {
+    padding: 20,
+    paddingBottom: 10,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ecf0f1',
+  },
+  filterTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 12,
+  },
+  periodScrollView: {
+    marginHorizontal: -5,
+  },
+  periodButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 5,
+  },
+  periodButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ecf0f1',
+  },
+  periodButtonActive: {
+    backgroundColor: '#3498db',
+    borderColor: '#3498db',
+  },
+  periodButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#7f8c8d',
+  },
+  periodButtonTextActive: {
+    color: '#fff',
   },
   section: {
     padding: 20,
