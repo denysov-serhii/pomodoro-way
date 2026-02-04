@@ -7,11 +7,10 @@ import {
 } from 'react-native';
 import TaskList from './TaskList';
 import ProjectsManager from './ProjectsManager';
-import FoldersManager from './FoldersManager';
 import TagsManager from './TagsManager';
 import AddTaskModal from './AddTaskModal';
 
-type TasksTab = 'tasks' | 'projects' | 'folders' | 'tags';
+type TasksTab = 'tasks' | 'projects' | 'tags';
 
 const TasksPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TasksTab>('tasks');
@@ -23,8 +22,6 @@ const TasksPage: React.FC = () => {
         return <TaskList onAddTask={() => setShowAddTaskModal(true)} />;
       case 'projects':
         return <ProjectsManager />;
-      case 'folders':
-        return <FoldersManager />;
       case 'tags':
         return <TagsManager />;
       default:
@@ -49,14 +46,6 @@ const TasksPage: React.FC = () => {
         >
           <Text style={[styles.tabText, activeTab === 'projects' && styles.tabTextActive]}>
             Projects
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'folders' && styles.tabActive]}
-          onPress={() => setActiveTab('folders')}
-        >
-          <Text style={[styles.tabText, activeTab === 'folders' && styles.tabTextActive]}>
-            Folders
           </Text>
         </TouchableOpacity>
         <TouchableOpacity

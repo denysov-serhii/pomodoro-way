@@ -17,9 +17,10 @@ interface AddTaskModalProps {
   visible: boolean;
   onClose: () => void;
   defaultProjectId?: string;
+  defaultFolderId?: string;
 }
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose, defaultProjectId }) => {
+const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose, defaultProjectId, defaultFolderId }) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('AddTaskModal must be used within AppProvider');
@@ -29,7 +30,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose, defaultPr
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [selectedProject, setSelectedProject] = useState<string | null>(defaultProjectId || null);
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(defaultFolderId || null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   // Update selected project when defaultProjectId changes
@@ -38,6 +39,13 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose, defaultPr
       setSelectedProject(defaultProjectId);
     }
   }, [defaultProjectId]);
+
+  // Update selected folder when defaultFolderId changes
+  React.useEffect(() => {
+    if (defaultFolderId) {
+      setSelectedFolder(defaultFolderId);
+    }
+  }, [defaultFolderId]);
 
   const handleSave = () => {
     if (!title.trim()) {
@@ -61,7 +69,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose, defaultPr
     setTitle('');
     setDescription('');
     setSelectedProject(defaultProjectId || null);
-    setSelectedFolder(null);
+    setSelectedFolder(defaultFolderId || null);
     setSelectedTags([]);
     onClose();
   };
