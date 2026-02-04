@@ -12,6 +12,7 @@ import { AppContext } from '../contexts/AppContext';
 import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import { Project } from '../types';
+import ProjectDetailPage from './ProjectDetailPage';
 
 const ProjectsManager: React.FC = () => {
   const context = useContext(AppContext);
@@ -22,6 +23,7 @@ const ProjectsManager: React.FC = () => {
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [newProjectName, setNewProjectName] = useState<string>('');
   const [isAdding, setIsAdding] = useState<boolean>(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const handleAddProject = () => {
     if (!newProjectName.trim()) {
@@ -65,7 +67,10 @@ const ProjectsManager: React.FC = () => {
     const taskCount = getProjectTaskCount(item.id);
 
     return (
-      <View style={styles.projectItem}>
+      <TouchableOpacity 
+        style={styles.projectItem}
+        onPress={() => setSelectedProjectId(item.id)}
+      >
         <View style={styles.projectContent}>
           <MaterialIcons name="folder" size={24} color="#3498db" />
           <View style={styles.projectInfo}>
@@ -73,64 +78,78 @@ const ProjectsManager: React.FC = () => {
             <Text style={styles.projectTaskCount}>{taskCount} task(s)</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => handleDeleteProject(item.id, item.name)}>
+        <TouchableOpacity 
+          onPress={(e) => {
+            e.stopPropagation();
+            handleDeleteProject(item.id, item.name);
+          }}
+        >
           <MaterialIcons name="delete" size={24} color="#e74c3c" />
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Projects</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setIsAdding(!isAdding)}
-        >
-          <MaterialIcons name={isAdding ? 'close' : 'add'} size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-      {isAdding && (
-        <View style={styles.addContainer}>
-          <TextInput
-            style={styles.input}
-            value={newProjectName}
-            onChangeText={setNewProjectName}
-            placeholder="Project name"
-            placeholderTextColor="#95a5a6"
-          />
-          <TouchableOpacity style={styles.saveButton} onPress={handleAddProject}>
-            <Text style={styles.saveButtonText}>Add</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {projects.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <MaterialIcons name="folder-open" size={64} color="#bdc3c7" />
-          <Text style={styles.emptyText}>No projects yet</Text>
-          <Text style={styles.emptySubtext}>Tap + to create your first project</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={projects}
-          renderItem={renderProject}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
+    <>
+      {selectedProjectId ? (
+        <ProjectDetailPage 
+          projectId={selectedProjectId} 
+          onBack={() => setSelectedProjectId(null)} 
         />
+      ) : (
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.headerText}>Projects</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setIsAdding(!isAdding)}
+            >
+              <MaterialIcons name={isAdding ? 'close' : 'add'} size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {isAdding && (
+            <View style={styles.addContainer}>
+              <TextInput
+                style={styles.input}
+                value={newProjectName}
+                onChangeText={setNewProjectName}
+                placeholder="Project name"
+                placeholderTextColor="#95a5a6"
+              />
+              <TouchableOpacity style={styles.saveButton} onPress={handleAddProject}>
+                <Text style={styles.saveButtonText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {projects.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="folder-open" size={64} color="#bdc3c7" />
+              <Text style={styles.emptyText}>No projects yet</Text>
+              <Text style={styles.emptySubtext}>Tap + to create your first project</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={projects}
+              renderItem={renderProject}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContainer}
+            />
+          )}
+          <ConfirmDialog
+            visible={dialogState.visible}
+            title={dialogState.title}
+            message={dialogState.message}
+            confirmText={dialogState.confirmText}
+            showCancel={dialogState.showCancel}
+            onConfirm={handleConfirm}
+            onCancel={hideDialog}
+          />
+        </View>
       )}
-      <ConfirmDialog
-        visible={dialogState.visible}
-        title={dialogState.title}
-        message={dialogState.message}
-        confirmText={dialogState.confirmText}
-        showCancel={dialogState.showCancel}
-        onConfirm={handleConfirm}
-        onCancel={hideDialog}
-      />
-    </View>
+    </>
   );
 };
 

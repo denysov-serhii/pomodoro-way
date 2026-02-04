@@ -16,9 +16,10 @@ import { useConfirmDialog } from '../hooks/useConfirmDialog';
 interface AddTaskModalProps {
   visible: boolean;
   onClose: () => void;
+  defaultProjectId?: string;
 }
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
+const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose, defaultProjectId }) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('AddTaskModal must be used within AppProvider');
@@ -27,9 +28,16 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(defaultProjectId || null);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Update selected project when defaultProjectId changes
+  React.useEffect(() => {
+    if (defaultProjectId) {
+      setSelectedProject(defaultProjectId);
+    }
+  }, [defaultProjectId]);
 
   const handleSave = () => {
     if (!title.trim()) {
