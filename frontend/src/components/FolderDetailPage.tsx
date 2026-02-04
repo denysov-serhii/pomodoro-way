@@ -5,6 +5,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  GestureResponderEvent,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
@@ -12,6 +13,7 @@ import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import AddTaskModal from './AddTaskModal';
 import { Task } from '../types';
+import { sortTasks } from '../utils/taskSorting';
 
 interface FolderDetailPageProps {
   folderId: string;
@@ -23,12 +25,12 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
   if (!context) {
     throw new Error('FolderDetailPage must be used within AppProvider');
   }
-  const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask } = context;
+  const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask, completeTask, toggleStarTask } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
 
   const folder = folders.find(f => f.id === folderId);
-  const folderTasks = tasks.filter(task => task.folderId === folderId);
+  const folderTasks = sortTasks(tasks.filter(task => task.folderId === folderId && !task.isCompleted));
 
   const getProjectName = (projectId?: string | null): string | null => {
     if (!projectId) return null;
@@ -45,12 +47,38 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
   };
 
   const handleDeleteTask = (taskId: string, taskTitle: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    
+    // Check if task has tracked time
+    if (task && (task.completedPomodoros > 0 || task.totalMinutes > 0)) {
+      showDialog({
+        title: 'Cannot Delete Task',
+        message: `This task has tracked time and cannot be deleted. Would you like to complete/archive it instead?`,
+        confirmText: 'Archive',
+        onConfirm: () => completeTask(taskId),
+      });
+      return;
+    }
+
     showDialog({
       title: 'Delete Task',
       message: `Are you sure you want to delete "${taskTitle}"?`,
       confirmText: 'Delete',
       onConfirm: () => deleteTask(taskId),
     });
+  };
+
+  const handleCompleteTask = (taskId: string, taskTitle: string) => {
+    showDialog({
+      title: 'Complete Task',
+      message: `Mark "${taskTitle}" as complete? It will be moved to the archive.`,
+      confirmText: 'Complete',
+      onConfirm: () => completeTask(taskId),
+    });
+  };
+
+  const handleToggleStar = (taskId: string) => {
+    toggleStarTask(taskId);
   };
 
   const renderTask = ({ item }: { item: Task }) => {
@@ -65,12 +93,42 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
       >
         <View style={styles.taskContent}>
           <View style={styles.taskHeader}>
+            <TouchableOpacity 
+              onPress={(e: GestureResponderEvent) => {
+                e.stopPropagation();
+                handleToggleStar(item.id);
+              }}
+              style={styles.starButton}
+            >
+              <MaterialIcons 
+                name={item.isStarred ? "star" : "star-border"} 
+                size={24} 
+                color={item.isStarred ? "#f39c12" : "#95a5a6"} 
+              />
+            </TouchableOpacity>
             <Text style={[styles.taskTitle, isSelected && styles.taskTitleSelected]}>
               {item.title}
             </Text>
-            <TouchableOpacity onPress={() => handleDeleteTask(item.id, item.title)}>
-              <MaterialIcons name="delete" size={24} color="#e74c3c" />
-            </TouchableOpacity>
+            <View style={styles.taskActions}>
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  handleCompleteTask(item.id, item.title);
+                }}
+                style={styles.actionButton}
+              >
+                <MaterialIcons name="check-circle" size={24} color="#27ae60" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  handleDeleteTask(item.id, item.title);
+                }}
+                style={styles.actionButton}
+              >
+                <MaterialIcons name="delete" size={24} color="#e74c3c" />
+              </TouchableOpacity>
+            </View>
           </View>
           
           {item.description && (
@@ -236,6 +294,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 6,
+  },
+  starButton: {
+    marginRight: 8,
+    padding: 2,
+  },
+  taskActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 2,
   },
   taskTitle: {
     fontSize: 16,

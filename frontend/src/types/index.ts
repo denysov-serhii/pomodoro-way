@@ -8,6 +8,9 @@ export interface Task {
   createdAt: string;
   completedPomodoros: number;
   totalMinutes: number; // Total actual time spent on this task in minutes
+  isCompleted?: boolean; // Whether the task is completed/archived
+  isStarred?: boolean; // Whether the task is starred (pinned to top)
+  completedAt?: string; // When the task was completed
 }
 
 export interface Project {
@@ -69,6 +72,8 @@ export interface AppContextType {
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedPomodoros' | 'totalMinutes'>) => Promise<void>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
+  completeTask: (taskId: string) => Promise<void>;
+  toggleStarTask: (taskId: string) => Promise<void>;
   addProject: (project: Omit<Project, 'id' | 'createdAt'>) => Promise<void>;
   deleteProject: (projectId: string) => Promise<void>;
   addFolder: (folder: Omit<Folder, 'id' | 'createdAt'>) => Promise<void>;
