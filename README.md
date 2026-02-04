@@ -16,8 +16,12 @@ A React Native application for managing tasks and tracking productivity using th
 - Create and manage tasks
 - Add descriptions to tasks
 - Track completed pomodoros per task
-- Delete tasks
+- **Star/pin important tasks** to keep them at the top
+- **Complete tasks** to move them to the archive
+- **Smart task sorting** by starred status, pomodoro count, tracked time, and creation date
+- Delete tasks (protected deletion prevents removing tasks with tracked time)
 - Select tasks to link with pomodoro timer
+- **Archive page** to view and review completed tasks
 
 ### Projects
 - Create projects to organize related tasks
