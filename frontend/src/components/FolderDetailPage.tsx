@@ -12,6 +12,7 @@ import { AppContext } from '../contexts/AppContext';
 import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import AddTaskModal from './AddTaskModal';
+import EditTaskModal from './EditTaskModal';
 import { Task } from '../types';
 import { sortTasks } from '../utils/taskSorting';
 
@@ -28,6 +29,7 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
   const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask, completeTask, toggleStarTask } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const folder = folders.find(f => f.id === folderId);
   const folderTasks = sortTasks(tasks.filter(task => task.folderId === folderId && !task.isCompleted));
@@ -110,6 +112,15 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
               {item.title}
             </Text>
             <View style={styles.taskActions}>
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  setEditingTask(item);
+                }}
+                style={styles.actionButton}
+              >
+                <MaterialIcons name="edit" size={24} color="#3498db" />
+              </TouchableOpacity>
               <TouchableOpacity 
                 onPress={(e: GestureResponderEvent) => {
                   e.stopPropagation();
@@ -219,6 +230,14 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
         onClose={() => setShowAddTaskModal(false)}
         defaultFolderId={folderId}
       />
+
+      {editingTask && (
+        <EditTaskModal
+          visible={true}
+          onClose={() => setEditingTask(null)}
+          task={editingTask}
+        />
+      )}
 
       <ConfirmDialog
         visible={dialogState.visible}
