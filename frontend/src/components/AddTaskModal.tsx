@@ -16,19 +16,36 @@ import { useConfirmDialog } from '../hooks/useConfirmDialog';
 interface AddTaskModalProps {
   visible: boolean;
   onClose: () => void;
+  defaultProjectId?: string;
+  defaultFolderId?: string;
 }
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
+const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose, defaultProjectId, defaultFolderId }) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('AddTaskModal must be used within AppProvider');
   }
-  const { addTask, projects, tags } = context;
+  const { addTask, projects, folders, tags } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(defaultProjectId || null);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(defaultFolderId || null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Update selected project when defaultProjectId changes
+  React.useEffect(() => {
+    if (defaultProjectId) {
+      setSelectedProject(defaultProjectId);
+    }
+  }, [defaultProjectId]);
+
+  // Update selected folder when defaultFolderId changes
+  React.useEffect(() => {
+    if (defaultFolderId) {
+      setSelectedFolder(defaultFolderId);
+    }
+  }, [defaultFolderId]);
 
   const handleSave = () => {
     if (!title.trim()) {
@@ -44,13 +61,15 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
       title: title.trim(),
       description: description.trim(),
       projectId: selectedProject,
+      folderId: selectedFolder,
       tags: selectedTags,
     });
 
     // Reset form
     setTitle('');
     setDescription('');
-    setSelectedProject(null);
+    setSelectedProject(defaultProjectId || null);
+    setSelectedFolder(defaultFolderId || null);
     setSelectedTags([]);
     onClose();
   };
@@ -95,6 +114,51 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ visible, onClose }) => {
                 multiline
                 numberOfLines={4}
               />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Folder</Text>
+              {folders.length === 0 ? (
+                <Text style={styles.emptyMessage}>No folders available</Text>
+              ) : (
+                <View style={styles.optionsContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      selectedFolder === null && styles.optionButtonSelected,
+                    ]}
+                    onPress={() => setSelectedFolder(null)}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        selectedFolder === null && styles.optionTextSelected,
+                      ]}
+                    >
+                      No Folder
+                    </Text>
+                  </TouchableOpacity>
+                  {folders.map((folder) => (
+                    <TouchableOpacity
+                      key={folder.id}
+                      style={[
+                        styles.optionButton,
+                        selectedFolder === folder.id && styles.optionButtonSelected,
+                      ]}
+                      onPress={() => setSelectedFolder(folder.id)}
+                    >
+                      <Text
+                        style={[
+                          styles.optionText,
+                          selectedFolder === folder.id && styles.optionTextSelected,
+                        ]}
+                      >
+                        {folder.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
 
             <View style={styles.inputGroup}>

@@ -1,13 +1,14 @@
 import { db } from '../config/firebase';
 import { collection, getDocs, setDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Task, Project, Tag, TimerState, Settings } from '../types';
+import { Task, Project, Folder, Tag, TimerState, Settings } from '../types';
 import { logError } from './errorLogger';
 
 // Firestore collection names
 const COLLECTIONS = {
   TASKS: 'tasks',
   PROJECTS: 'projects',
+  FOLDERS: 'folders',
   TAGS: 'tags',
   SETTINGS: 'settings',
 };
@@ -137,6 +138,46 @@ export const loadTags = async (): Promise<Tag[]> => {
   }
 };
 
+export const saveFolders = async (folders: Folder[]): Promise<void> => {
+  try {
+    const batch = writeBatch(db);
+    const foldersCollection = collection(db, COLLECTIONS.FOLDERS);
+    
+    // Get existing folder IDs
+    const snapshot = await getDocs(foldersCollection);
+    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
+    const newIds = new Set(folders.map(folder => folder.id));
+    
+    // Delete folders that no longer exist
+    existingIds.forEach(id => {
+      if (!newIds.has(id)) {
+        batch.delete(doc(db, COLLECTIONS.FOLDERS, id));
+      }
+    });
+    
+    // Update or create folders
+    folders.forEach(folder => {
+      batch.set(doc(db, COLLECTIONS.FOLDERS, folder.id), folder);
+    });
+    
+    await batch.commit();
+  } catch (error) {
+    logError('Error saving folders', 'storage.saveFolders', error);
+  }
+};
+
+export const loadFolders = async (): Promise<Folder[]> => {
+  try {
+    const foldersCollection = collection(db, COLLECTIONS.FOLDERS);
+    const q = query(foldersCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as Folder);
+  } catch (error) {
+    logError('Error loading folders', 'storage.loadFolders', error);
+    return [];
+  }
+};
+
 export const saveTimerState = async (timerState: TimerState): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.TIMER_STATE, JSON.stringify(timerState));
@@ -190,6 +231,7 @@ export interface BackupData {
   exportDate: string;
   tasks: Task[];
   projects: Project[];
+  folders: Folder[];
   tags: Tag[];
   settings: Settings | null;
 }
@@ -198,6 +240,7 @@ export const exportBackup = async (): Promise<string> => {
   try {
     const tasks = await loadTasks();
     const projects = await loadProjects();
+    const folders = await loadFolders();
     const tags = await loadTags();
     const settings = await loadSettings();
     
@@ -206,6 +249,7 @@ export const exportBackup = async (): Promise<string> => {
       exportDate: new Date().toISOString(),
       tasks,
       projects,
+      folders,
       tags,
       settings,
     };
@@ -229,6 +273,9 @@ export const importBackup = async (backupJson: string): Promise<void> => {
     // Save all data
     await saveTasks(backupData.tasks);
     await saveProjects(backupData.projects);
+    if (backupData.folders) {
+      await saveFolders(backupData.folders);
+    }
     await saveTags(backupData.tags);
     if (backupData.settings) {
       await saveSettings(backupData.settings);

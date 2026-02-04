@@ -1,28 +1,48 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  TextInput,
+  GestureResponderEvent,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
 import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
-import { Task } from '../types';
+import FolderDetailPage from './FolderDetailPage';
+import { Task, Folder } from '../types';
 
 interface TaskListProps {
   onAddTask: () => void;
 }
+
+type ListItem = 
+  | { type: 'folder'; data: Folder }
+  | { type: 'task'; data: Task };
 
 const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('TaskList must be used within AppProvider');
   }
-  const { tasks, projects, tags, currentTask, setCurrentTask, deleteTask } = context;
+  const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask, addFolder, deleteFolder } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false);
+  const [newFolderName, setNewFolderName] = useState<string>('');
+
+  // If a folder is selected, show folder detail page
+  if (selectedFolderId) {
+    return (
+      <FolderDetailPage
+        folderId={selectedFolderId}
+        onBack={() => setSelectedFolderId(null)}
+      />
+    );
+  }
 
   const getProjectName = (projectId?: string | null): string | null => {
     if (!projectId) return null;
@@ -47,7 +67,44 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
     });
   };
 
-  const renderTask = ({ item }: { item: Task }) => {
+  const handleDeleteFolder = (folderId: string, folderName: string) => {
+    showDialog({
+      title: 'Delete Folder',
+      message: `Are you sure you want to delete "${folderName}"? Tasks in this folder will be moved to no folder.`,
+      confirmText: 'Delete',
+      onConfirm: () => deleteFolder(folderId),
+    });
+  };
+
+  const handleAddFolder = () => {
+    if (!newFolderName.trim()) {
+      showDialog({
+        title: 'Error',
+        message: 'Please enter a folder name',
+        showCancel: false,
+      });
+      return;
+    }
+
+    addFolder({ name: newFolderName.trim() });
+    setNewFolderName('');
+    setIsAddingFolder(false);
+  };
+
+  const getFolderTaskCount = (folderId: string): number => {
+    return tasks.filter((task) => task.folderId === folderId).length;
+  };
+
+  // Get tasks that are not in any folder
+  const tasksWithoutFolder = tasks.filter(task => !task.folderId);
+
+  // Create combined list: folders first, then tasks without folders
+  const listItems: ListItem[] = [
+    ...folders.map(folder => ({ type: 'folder' as const, data: folder })),
+    ...tasksWithoutFolder.map(task => ({ type: 'task' as const, data: task })),
+  ];
+
+  const renderTask = (item: Task) => {
     const isSelected = currentTask?.id === item.id;
     const projectName = getProjectName(item.projectId);
     const tagNames = getTagNames(item.tags);
@@ -104,26 +161,95 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
     );
   };
 
+  const renderFolder = (folder: Folder) => {
+    const taskCount = getFolderTaskCount(folder.id);
+
+    return (
+      <TouchableOpacity
+        style={styles.folderItem}
+        onPress={() => setSelectedFolderId(folder.id)}
+      >
+        <View style={styles.folderContent}>
+          <MaterialIcons name="folder" size={32} color="#f39c12" />
+          <View style={styles.folderInfo}>
+            <Text style={styles.folderName}>{folder.name}</Text>
+            <Text style={styles.folderTaskCount}>{taskCount} task(s)</Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={24} color="#95a5a6" />
+        </View>
+        <TouchableOpacity 
+          onPress={(e: GestureResponderEvent) => {
+            e.stopPropagation();
+            handleDeleteFolder(folder.id, folder.name);
+          }}
+          style={styles.folderDeleteButton}
+        >
+          <MaterialIcons name="delete" size={20} color="#e74c3c" />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderItem = ({ item }: { item: ListItem }) => {
+    if (item.type === 'folder') {
+      return renderFolder(item.data);
+    } else {
+      return renderTask(item.data);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Tasks</Text>
-        <TouchableOpacity style={styles.addButton} onPress={onAddTask}>
-          <MaterialIcons name="add" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={styles.addFolderButton} 
+            onPress={() => setIsAddingFolder(!isAddingFolder)}
+          >
+            <MaterialIcons name="create-new-folder" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.addButton} onPress={onAddTask}>
+            <MaterialIcons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {tasks.length === 0 ? (
+      {isAddingFolder && (
+        <View style={styles.addFolderContainer}>
+          <TextInput
+            style={styles.input}
+            value={newFolderName}
+            onChangeText={setNewFolderName}
+            placeholder="Folder name"
+            placeholderTextColor="#95a5a6"
+          />
+          <TouchableOpacity style={styles.saveButton} onPress={handleAddFolder}>
+            <Text style={styles.saveButtonText}>Add</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.cancelButton} 
+            onPress={() => {
+              setIsAddingFolder(false);
+              setNewFolderName('');
+            }}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {listItems.length === 0 ? (
         <View style={styles.emptyContainer}>
           <MaterialIcons name="check-circle-outline" size={64} color="#bdc3c7" />
-          <Text style={styles.emptyText}>No tasks yet</Text>
-          <Text style={styles.emptySubtext}>Tap + to create your first task</Text>
+          <Text style={styles.emptyText}>No tasks or folders yet</Text>
+          <Text style={styles.emptySubtext}>Tap + to create a task or folder icon to create a folder</Text>
         </View>
       ) : (
         <FlatList
-          data={tasks}
-          renderItem={renderTask}
-          keyExtractor={(item) => item.id}
+          data={listItems}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.type === 'folder' ? `folder-${item.data.id}` : `task-${item.data.id}`}
           contentContainerStyle={styles.listContainer}
         />
       )}
@@ -160,6 +286,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2c3e50',
   },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   addButton: {
     backgroundColor: '#27ae60',
     width: 40,
@@ -168,8 +298,93 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  addFolderButton: {
+    backgroundColor: '#f39c12',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addFolderContainer: {
+    flexDirection: 'row',
+    padding: 15,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ecf0f1',
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#bdc3c7',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#2c3e50',
+    backgroundColor: '#fff',
+    marginRight: 10,
+  },
+  saveButton: {
+    backgroundColor: '#27ae60',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    backgroundColor: '#95a5a6',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   listContainer: {
     padding: 10,
+  },
+  folderItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef5e7',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#f39c12',
+  },
+  folderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  folderInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  folderName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2c3e50',
+  },
+  folderTaskCount: {
+    fontSize: 14,
+    color: '#7f8c8d',
+    marginTop: 2,
+  },
+  folderDeleteButton: {
+    padding: 5,
+    marginLeft: 10,
   },
   taskItem: {
     backgroundColor: '#fff',
@@ -210,6 +425,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
+  },
+  folderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef5e7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginRight: 6,
+    marginBottom: 3,
+  },
+  folderText: {
+    fontSize: 12,
+    color: '#f39c12',
+    marginLeft: 4,
+    fontWeight: '600',
   },
   projectBadge: {
     flexDirection: 'row',
