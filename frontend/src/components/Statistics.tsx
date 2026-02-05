@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
-import { Task, Project, Tag, PomodoroSession } from '../types';
+import { Task, Project, Tag } from '../types';
 
 interface TaskWithMinutes extends Task {
   minutes: number;
