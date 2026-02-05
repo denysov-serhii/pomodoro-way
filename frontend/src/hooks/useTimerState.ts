@@ -3,7 +3,7 @@ import { AppContext } from '../contexts/AppContext';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/storage';
 import { DurationOption, ConfirmDialogState } from '../types';
 import { playNotificationSound, initializeAudio } from '../utils/audio';
-import { sendPomodoroCompleteNotification, sendBreakCompleteNotification } from '../utils/notifications';
+import { sendPomodoroCompleteNotification, sendBreakCompleteNotification, schedulePomodoroCompleteNotification, scheduleBreakCompleteNotification, cancelTimerNotification } from '../utils/notifications';
 import { logError } from '../utils/errorLogger';
 
 export const DURATION_OPTIONS: DurationOption[] = [
@@ -85,6 +85,18 @@ export const useTimerState = () => {
             const task = tasks.find(t => t.id === savedState.taskId);
             if (task) setCurrentTask(task);
           }
+
+          // Schedule notification for remaining time
+          if (savedState.sessionType === 'pomodoro') {
+            schedulePomodoroCompleteNotification(remainingTime, tasks.find(t => t.id === savedState.taskId)?.title).catch(error => {
+              logError('Failed to schedule notification on restore', 'useTimerState.loadSavedState', error);
+            });
+          } else {
+            const breakType = savedState.sessionType === 'longBreak' ? 'long' : 'short';
+            scheduleBreakCompleteNotification(remainingTime, breakType).catch(error => {
+              logError('Failed to schedule notification on restore', 'useTimerState.loadSavedState', error);
+            });
+          }
         } else if (savedState.isRunning && remainingTime <= 0) {
           // Timer completed while away
           setIsCompleted(true);
@@ -134,6 +146,11 @@ export const useTimerState = () => {
           setTimeLeft(0);
           setIsRunning(false);
           setIsCompleted(true);
+          
+          // Cancel any pending notification since timer completed
+          cancelTimerNotification().catch(error => {
+            logError('Failed to cancel notification on complete', 'useTimerState.timerEffect', error);
+          });
           
           if (sessionType === 'pomodoro') {
             // Pomodoro completed
@@ -256,6 +273,10 @@ export const useTimerState = () => {
     setStartTime(null);
     clearTimerState();
     hideDialog();
+    // Cancel any pending notification
+    cancelTimerNotification().catch(error => {
+      logError('Failed to cancel notification on skip break', 'useTimerState.skipBreak', error);
+    });
   };
 
   return {

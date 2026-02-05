@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   Text,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
 import { AppProvider } from './src/contexts/AppContext';
 import PomodoroTimer from './src/components/PomodoroTimer';
 import TasksPage from './src/components/TasksPage';
@@ -22,7 +24,25 @@ export default function App() {
 
   // Request notification permissions on app startup
   useEffect(() => {
-    requestNotificationPermissions();
+    const setupNotifications = async () => {
+      // Request permissions
+      await requestNotificationPermissions();
+      
+      // Set up Android notification channel
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('timer-notifications', {
+          name: 'Timer Notifications',
+          importance: Notifications.AndroidImportance.HIGH,
+          sound: 'default',
+          vibrationPattern: [0, 250, 250, 250],
+          enableVibrate: true,
+          enableLights: true,
+          lightColor: '#e74c3c',
+        });
+      }
+    };
+    
+    setupNotifications();
   }, []);
 
   const renderContent = () => {

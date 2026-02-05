@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { clearTimerState } from '../utils/storage';
 import { playNotificationSound } from '../utils/audio';
-import { sendPomodoroCompleteNotification } from '../utils/notifications';
+import { sendPomodoroCompleteNotification, schedulePomodoroCompleteNotification, scheduleBreakCompleteNotification, cancelTimerNotification } from '../utils/notifications';
 import { logError } from '../utils/errorLogger';
 
 interface TimerState {
@@ -65,12 +65,29 @@ export const useTimerControls = (timerState: TimerState) => {
     if (timeLeft === selectedDuration * 60) {
       setSessionDuration(timeLeft);
     }
+
+    // Schedule notification for when session completes
+    if (sessionType === 'pomodoro') {
+      schedulePomodoroCompleteNotification(timeLeft, currentTask?.title).catch(error => {
+        logError('Failed to schedule pomodoro completion notification', 'useTimerControls.handleStart', error);
+      });
+    } else {
+      // Schedule break completion notification
+      const breakType = sessionType === 'longBreak' ? 'long' : 'short';
+      scheduleBreakCompleteNotification(timeLeft, breakType).catch(error => {
+        logError('Failed to schedule break completion notification', 'useTimerControls.handleStart', error);
+      });
+    }
   };
 
   const handlePause = () => {
     setIsRunning(false);
     // startTime will be recalculated on resume
     setStartTime(null);
+    // Cancel any pending notification since timer is paused
+    cancelTimerNotification().catch(error => {
+      logError('Failed to cancel notification on pause', 'useTimerControls.handlePause', error);
+    });
   };
 
   const handleReset = () => {
