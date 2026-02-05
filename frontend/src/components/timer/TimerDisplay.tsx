@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { timerStyles as styles } from '../../styles/timerStyles';
 import { DURATION_OPTIONS } from '../../hooks/useTimerState';
+import BreakScreen from './BreakScreen';
 
 const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
@@ -48,8 +49,12 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({
     }
   };
 
+  const isBreak = sessionType === 'shortBreak' || sessionType === 'longBreak';
+
   return (
     <View style={styles.timerContainer}>
+      {isBreak && <BreakScreen sessionType={sessionType} />}
+      
       <View style={[styles.sessionBadge, { backgroundColor: getSessionColor() }]}>
         <Text style={styles.sessionBadgeText}>{getSessionTitle()}</Text>
       </View>

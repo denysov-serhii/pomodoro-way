@@ -225,7 +225,9 @@ const Statistics: React.FC = () => {
         pomodoros,
         minutes,
       };
-    }).sort((a, b) => b.pomodoros - a.pomodoros);
+    })
+    .filter(project => project.pomodoros > 0)
+    .sort((a, b) => b.pomodoros - a.pomodoros);
   }, [projects, filteredTasks, sessionsByTask]);
 
   // Calculate tag statistics
@@ -248,7 +250,9 @@ const Statistics: React.FC = () => {
         pomodoros,
         minutes,
       };
-    }).sort((a, b) => b.pomodoros - a.pomodoros);
+    })
+    .filter(tag => tag.pomodoros > 0)
+    .sort((a, b) => b.pomodoros - a.pomodoros);
   }, [tags, filteredTasks, sessionsByTask]);
 
   const formatTime = (minutes: number): string => {

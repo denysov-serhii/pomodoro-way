@@ -12,7 +12,8 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#ffffff"
+          "color": "#ffffff",
+          "defaultChannel": "timer-notifications"
         }
       ],
       "expo-font",
@@ -36,7 +37,8 @@
       "package": "com.gaydara27sorganization.pomodoroway",
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE"
+        "VIBRATE",
+        "POST_NOTIFICATIONS"
       ],
       "googleServicesFile": "./misc/android/google-services.json"
     },
