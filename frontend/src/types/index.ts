@@ -13,6 +13,14 @@ export interface Task {
   completedAt?: string; // When the task was completed
 }
 
+export interface PomodoroSession {
+  id: string;
+  taskId: string;
+  completedAt: string; // ISO date string when the pomodoro was completed
+  durationMinutes: number; // Actual duration of the pomodoro session
+  createdAt: string; // For consistency with other entities
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -66,6 +74,7 @@ export interface AppContextType {
   projects: Project[];
   folders: Folder[];
   tags: Tag[];
+  pomodoroSessions: PomodoroSession[];
   currentTask: Task | null;
   settings: Settings;
   setCurrentTask: (task: Task | null) => void;

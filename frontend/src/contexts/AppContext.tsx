@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { saveTasks, loadTasks, saveProjects, loadProjects, saveFolders, loadFolders, saveTags, loadTags, saveSettings, loadSettings } from '../utils/storage';
-import { Task, Project, Folder, Tag, AppContextType, Settings } from '../types';
+import { saveTasks, loadTasks, saveProjects, loadProjects, saveFolders, loadFolders, saveTags, loadTags, saveSettings, loadSettings, savePomodoroSessions, loadPomodoroSessions } from '../utils/storage';
+import { Task, Project, Folder, Tag, AppContextType, Settings, PomodoroSession } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -13,6 +13,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [pomodoroSessions, setPomodoroSessions] = useState<PomodoroSession[]>([]);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
   const [settings, setSettings] = useState<Settings>({
     shortBreakDuration: 5,
@@ -29,11 +30,13 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     const loadedProjects = await loadProjects();
     const loadedFolders = await loadFolders();
     const loadedTags = await loadTags();
+    const loadedSessions = await loadPomodoroSessions();
     const loadedSettings = await loadSettings();
     setTasks(loadedTasks);
     setProjects(loadedProjects);
     setFolders(loadedFolders);
     setTags(loadedTags);
+    setPomodoroSessions(loadedSessions);
     if (loadedSettings) {
       setSettings(loadedSettings);
     }
@@ -153,6 +156,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   const incrementTaskPomodoro = async (taskId: string, durationMinutes: number) => {
+    const now = new Date().toISOString();
+    
+    // Update task
     const updatedTasks = tasks.map(task =>
       task.id === taskId
         ? { 
@@ -164,6 +170,18 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     );
     setTasks(updatedTasks);
     await saveTasks(updatedTasks);
+    
+    // Create pomodoro session record with more robust ID
+    const newSession: PomodoroSession = {
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`,
+      taskId,
+      completedAt: now,
+      durationMinutes,
+      createdAt: now,
+    };
+    const updatedSessions = [...pomodoroSessions, newSession];
+    setPomodoroSessions(updatedSessions);
+    await savePomodoroSessions(updatedSessions);
   };
 
   const updateSettings = async (newSettings: Settings) => {
@@ -182,6 +200,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         projects,
         folders,
         tags,
+        pomodoroSessions,
         currentTask,
         settings,
         setCurrentTask,

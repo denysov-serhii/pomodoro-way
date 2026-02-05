@@ -1,7 +1,7 @@
 import { db } from '../config/firebase';
 import { collection, getDocs, setDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Task, Project, Folder, Tag, TimerState, Settings } from '../types';
+import { Task, Project, Folder, Tag, TimerState, Settings, PomodoroSession } from '../types';
 import { logError } from './errorLogger';
 
 // Firestore collection names
@@ -11,6 +11,7 @@ const COLLECTIONS = {
   FOLDERS: 'folders',
   TAGS: 'tags',
   SETTINGS: 'settings',
+  POMODORO_SESSIONS: 'pomodoroSessions',
 };
 
 // AsyncStorage keys (used for timer state which is temporary)
@@ -226,6 +227,46 @@ export const loadSettings = async (): Promise<Settings | null> => {
   }
 };
 
+export const savePomodoroSessions = async (sessions: PomodoroSession[]): Promise<void> => {
+  try {
+    const batch = writeBatch(db);
+    const sessionsCollection = collection(db, COLLECTIONS.POMODORO_SESSIONS);
+    
+    // Get existing session IDs
+    const snapshot = await getDocs(sessionsCollection);
+    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
+    const newIds = new Set(sessions.map(session => session.id));
+    
+    // Delete sessions that no longer exist
+    existingIds.forEach(id => {
+      if (!newIds.has(id)) {
+        batch.delete(doc(db, COLLECTIONS.POMODORO_SESSIONS, id));
+      }
+    });
+    
+    // Update or create sessions
+    sessions.forEach(session => {
+      batch.set(doc(db, COLLECTIONS.POMODORO_SESSIONS, session.id), session);
+    });
+    
+    await batch.commit();
+  } catch (error) {
+    logError('Error saving pomodoro sessions', 'storage.savePomodoroSessions', error);
+  }
+};
+
+export const loadPomodoroSessions = async (): Promise<PomodoroSession[]> => {
+  try {
+    const sessionsCollection = collection(db, COLLECTIONS.POMODORO_SESSIONS);
+    const q = query(sessionsCollection, orderBy('completedAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as PomodoroSession);
+  } catch (error) {
+    logError('Error loading pomodoro sessions', 'storage.loadPomodoroSessions', error);
+    return [];
+  }
+};
+
 export interface BackupData {
   version: string;
   exportDate: string;
@@ -233,6 +274,7 @@ export interface BackupData {
   projects: Project[];
   folders: Folder[];
   tags: Tag[];
+  pomodoroSessions: PomodoroSession[];
   settings: Settings | null;
 }
 
@@ -242,6 +284,7 @@ export const exportBackup = async (): Promise<string> => {
     const projects = await loadProjects();
     const folders = await loadFolders();
     const tags = await loadTags();
+    const pomodoroSessions = await loadPomodoroSessions();
     const settings = await loadSettings();
     
     const backupData: BackupData = {
@@ -251,6 +294,7 @@ export const exportBackup = async (): Promise<string> => {
       projects,
       folders,
       tags,
+      pomodoroSessions,
       settings,
     };
     
@@ -277,6 +321,9 @@ export const importBackup = async (backupJson: string): Promise<void> => {
       await saveFolders(backupData.folders);
     }
     await saveTags(backupData.tags);
+    if (backupData.pomodoroSessions) {
+      await savePomodoroSessions(backupData.pomodoroSessions);
+    }
     if (backupData.settings) {
       await saveSettings(backupData.settings);
     }
