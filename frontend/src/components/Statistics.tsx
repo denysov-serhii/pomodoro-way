@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
-import { Task, Project, Tag } from '../types';
+import { Task, Project, Tag, PomodoroSession } from '../types';
 
 interface TaskWithMinutes extends Task {
   minutes: number;
@@ -36,14 +36,14 @@ const Statistics: React.FC = () => {
   if (!context) {
     throw new Error('Statistics must be used within AppProvider');
   }
-  const { tasks, projects, tags } = context;
+  const { tasks, projects, tags, pomodoroSessions } = context;
 
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('all');
 
-  // Filter tasks based on selected time period
-  const filteredTasks = useMemo(() => {
+  // Filter pomodoro sessions based on selected time period
+  const filteredSessions = useMemo(() => {
     if (selectedPeriod === 'all') {
-      return tasks;
+      return pomodoroSessions;
     }
 
     const now = new Date();
@@ -67,6 +67,49 @@ const Statistics: React.FC = () => {
         startDate = new Date(now.getTime() - 365 * MILLISECONDS_PER_DAY);
         break;
       default:
+        return pomodoroSessions;
+    }
+
+    return pomodoroSessions.filter(session => {
+      const sessionDate = new Date(session.completedAt);
+      return sessionDate >= startDate;
+    });
+  }, [pomodoroSessions, selectedPeriod]);
+
+  // Get tasks that have sessions in the selected period
+  const filteredTasks = useMemo(() => {
+    if (selectedPeriod === 'all') {
+      return tasks;
+    }
+
+    // Get unique task IDs from filtered sessions
+    const taskIdsWithSessions = new Set(filteredSessions.map(s => s.taskId));
+    return tasks.filter(task => taskIdsWithSessions.has(task.id));
+  }, [tasks, filteredSessions, selectedPeriod]);
+
+  // Filter tasks created in the period
+  const tasksCreatedInPeriod = useMemo(() => {
+    if (selectedPeriod === 'all') {
+      return tasks;
+    }
+
+    const now = new Date();
+    let startDate: Date;
+
+    switch (selectedPeriod) {
+      case 'day':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * MILLISECONDS_PER_DAY);
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 30 * MILLISECONDS_PER_DAY);
+        break;
+      case 'year':
+        startDate = new Date(now.getTime() - 365 * MILLISECONDS_PER_DAY);
+        break;
+      default:
         return tasks;
     }
 
@@ -76,14 +119,47 @@ const Statistics: React.FC = () => {
     });
   }, [tasks, selectedPeriod]);
 
+  // Filter tasks completed in the period
+  const tasksCompletedInPeriod = useMemo(() => {
+    if (selectedPeriod === 'all') {
+      return tasks.filter(task => task.isCompleted);
+    }
+
+    const now = new Date();
+    let startDate: Date;
+
+    switch (selectedPeriod) {
+      case 'day':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * MILLISECONDS_PER_DAY);
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 30 * MILLISECONDS_PER_DAY);
+        break;
+      case 'year':
+        startDate = new Date(now.getTime() - 365 * MILLISECONDS_PER_DAY);
+        break;
+      default:
+        return tasks.filter(task => task.isCompleted);
+    }
+
+    return tasks.filter(task => {
+      if (!task.isCompleted || !task.completedAt) return false;
+      const completedDate = new Date(task.completedAt);
+      return completedDate >= startDate;
+    });
+  }, [tasks, selectedPeriod]);
+
   // Calculate total statistics
   const stats = useMemo(() => {
-    const totalPomodoros = filteredTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
-    const totalMinutes = filteredTasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
+    const totalPomodoros = filteredSessions.length;
+    const totalMinutes = filteredSessions.reduce((sum, session) => sum + session.durationMinutes, 0);
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
 
-    // Count unique projects and tags that have tasks in the selected period
+    // Count unique projects and tags that have tasks with sessions in the selected period
     const uniqueProjectIds = new Set(filteredTasks.filter(t => t.projectId).map(t => t.projectId));
     const uniqueTagIds = new Set(filteredTasks.flatMap(t => t.tags || []));
 
@@ -94,25 +170,37 @@ const Statistics: React.FC = () => {
       totalTasks: filteredTasks.length,
       totalProjects: uniqueProjectIds.size,
       totalTags: uniqueTagIds.size,
+      tasksCreated: tasksCreatedInPeriod.length,
+      tasksCompleted: tasksCompletedInPeriod.length,
     };
-  }, [filteredTasks]);
+  }, [filteredSessions, filteredTasks, tasksCreatedInPeriod, tasksCompletedInPeriod]);
 
   // Calculate task statistics
   const taskStats = useMemo((): TaskWithMinutes[] => {
     return filteredTasks
-      .map(task => ({
-        ...task,
-        minutes: task.totalMinutes || 0,
-      }))
+      .map(task => {
+        // Calculate pomodoros and minutes from sessions in the selected period
+        const taskSessions = filteredSessions.filter(s => s.taskId === task.id);
+        const pomodoros = taskSessions.length;
+        const minutes = taskSessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+        
+        return {
+          ...task,
+          completedPomodoros: pomodoros,
+          minutes,
+        };
+      })
       .sort((a, b) => b.completedPomodoros - a.completedPomodoros);
-  }, [filteredTasks]);
+  }, [filteredTasks, filteredSessions]);
 
   // Calculate project statistics
   const projectStats = useMemo((): ProjectWithStats[] => {
     return projects.map(project => {
       const projectTasks = filteredTasks.filter(task => task.projectId === project.id);
-      const pomodoros = projectTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
-      const minutes = projectTasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
+      const projectTaskIds = new Set(projectTasks.map(t => t.id));
+      const projectSessions = filteredSessions.filter(s => projectTaskIds.has(s.taskId));
+      const pomodoros = projectSessions.length;
+      const minutes = projectSessions.reduce((sum, s) => sum + s.durationMinutes, 0);
       return {
         ...project,
         taskCount: projectTasks.length,
@@ -120,14 +208,16 @@ const Statistics: React.FC = () => {
         minutes,
       };
     }).sort((a, b) => b.pomodoros - a.pomodoros);
-  }, [projects, filteredTasks]);
+  }, [projects, filteredTasks, filteredSessions]);
 
   // Calculate tag statistics
   const tagStats = useMemo((): TagWithStats[] => {
     return tags.map(tag => {
       const tagTasks = filteredTasks.filter(task => task.tags && task.tags.includes(tag.id));
-      const pomodoros = tagTasks.reduce((sum, task) => sum + (task.completedPomodoros || 0), 0);
-      const minutes = tagTasks.reduce((sum, task) => sum + (task.totalMinutes || 0), 0);
+      const tagTaskIds = new Set(tagTasks.map(t => t.id));
+      const tagSessions = filteredSessions.filter(s => tagTaskIds.has(s.taskId));
+      const pomodoros = tagSessions.length;
+      const minutes = tagSessions.reduce((sum, s) => sum + s.durationMinutes, 0);
       return {
         ...tag,
         taskCount: tagTasks.length,
@@ -135,7 +225,7 @@ const Statistics: React.FC = () => {
         minutes,
       };
     }).sort((a, b) => b.pomodoros - a.pomodoros);
-  }, [tags, filteredTasks]);
+  }, [tags, filteredTasks, filteredSessions]);
 
   const formatTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -239,14 +329,14 @@ const Statistics: React.FC = () => {
             <Text style={styles.overallLabel}>Total Time</Text>
           </View>
           <View style={styles.overallCard}>
-            <MaterialIcons name="check-circle" size={32} color="#3498db" />
-            <Text style={styles.overallValue}>{stats.totalTasks}</Text>
-            <Text style={styles.overallLabel}>Tasks</Text>
+            <MaterialIcons name="add-task" size={32} color="#3498db" />
+            <Text style={styles.overallValue}>{stats.tasksCreated}</Text>
+            <Text style={styles.overallLabel}>Tasks Created</Text>
           </View>
           <View style={styles.overallCard}>
-            <MaterialIcons name="folder" size={32} color="#9b59b6" />
-            <Text style={styles.overallValue}>{stats.totalProjects}</Text>
-            <Text style={styles.overallLabel}>Projects</Text>
+            <MaterialIcons name="check-circle" size={32} color="#2ecc71" />
+            <Text style={styles.overallValue}>{stats.tasksCompleted}</Text>
+            <Text style={styles.overallLabel}>Tasks Completed</Text>
           </View>
         </View>
       </View>
