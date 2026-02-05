@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 interface BreakScreenProps {
@@ -12,7 +12,10 @@ const BreakScreen: React.FC<BreakScreenProps> = ({ sessionType }) => {
     ? ['🦁', '🐘', '🦒', '🐼', '🦘', '🦔']
     : ['🐱', '🐶', '🐰', '🐨', '🦊', '🐹'];
 
-  const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+  const randomAnimal = useMemo(
+    () => animals[Math.floor(Math.random() * animals.length)],
+    [sessionType]
+  );
 
   const messages = isLongBreak
     ? [
@@ -28,7 +31,10 @@ const BreakScreen: React.FC<BreakScreenProps> = ({ sessionType }) => {
         'Stretch and relax',
       ];
 
-  const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+  const randomMessage = useMemo(
+    () => messages[Math.floor(Math.random() * messages.length)],
+    [sessionType]
+  );
 
   return (
     <View style={[styles.container, isLongBreak ? styles.longBreakBg : styles.shortBreakBg]}>

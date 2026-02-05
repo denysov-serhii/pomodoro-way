@@ -144,7 +144,9 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
       <TouchableOpacity
         style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
         onPress={() => {
-          setCurrentTask(item);
+          if (!isExpanded) {
+            setCurrentTask(item);
+          }
           setExpandedTaskId(isExpanded ? null : item.id);
         }}
       >
