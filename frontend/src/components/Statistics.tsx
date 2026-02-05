@@ -12,7 +12,8 @@ import { AppContext } from '../contexts/AppContext';
 import { Task, Project, Tag } from '../types';
 
 interface TaskWithMinutes extends Task {
-  minutes: number;
+  pomodorosInPeriod: number;
+  minutesInPeriod: number;
 }
 
 interface ProjectWithStats extends Project {
@@ -152,6 +153,19 @@ const Statistics: React.FC = () => {
     });
   }, [tasks, selectedPeriod]);
 
+  // Create a lookup map of sessions by taskId for better performance
+  const sessionsByTask = useMemo(() => {
+    const map = new Map<string, { count: number; totalMinutes: number }>();
+    filteredSessions.forEach(session => {
+      const existing = map.get(session.taskId) || { count: 0, totalMinutes: 0 };
+      map.set(session.taskId, {
+        count: existing.count + 1,
+        totalMinutes: existing.totalMinutes + session.durationMinutes,
+      });
+    });
+    return map;
+  }, [filteredSessions]);
+
   // Calculate total statistics
   const stats = useMemo(() => {
     const totalPomodoros = filteredSessions.length;
@@ -179,28 +193,32 @@ const Statistics: React.FC = () => {
   const taskStats = useMemo((): TaskWithMinutes[] => {
     return filteredTasks
       .map(task => {
-        // Calculate pomodoros and minutes from sessions in the selected period
-        const taskSessions = filteredSessions.filter(s => s.taskId === task.id);
-        const pomodoros = taskSessions.length;
-        const minutes = taskSessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+        // Use lookup map instead of filtering
+        const taskSessionData = sessionsByTask.get(task.id) || { count: 0, totalMinutes: 0 };
         
         return {
           ...task,
-          completedPomodoros: pomodoros,
-          minutes,
+          pomodorosInPeriod: taskSessionData.count,
+          minutesInPeriod: taskSessionData.totalMinutes,
         };
       })
-      .sort((a, b) => b.completedPomodoros - a.completedPomodoros);
-  }, [filteredTasks, filteredSessions]);
+      .sort((a, b) => b.pomodorosInPeriod - a.pomodorosInPeriod);
+  }, [filteredTasks, sessionsByTask]);
 
   // Calculate project statistics
   const projectStats = useMemo((): ProjectWithStats[] => {
     return projects.map(project => {
       const projectTasks = filteredTasks.filter(task => task.projectId === project.id);
-      const projectTaskIds = new Set(projectTasks.map(t => t.id));
-      const projectSessions = filteredSessions.filter(s => projectTaskIds.has(s.taskId));
-      const pomodoros = projectSessions.length;
-      const minutes = projectSessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+      // Use lookup map to aggregate session data
+      let pomodoros = 0;
+      let minutes = 0;
+      projectTasks.forEach(task => {
+        const sessionData = sessionsByTask.get(task.id);
+        if (sessionData) {
+          pomodoros += sessionData.count;
+          minutes += sessionData.totalMinutes;
+        }
+      });
       return {
         ...project,
         taskCount: projectTasks.length,
@@ -208,16 +226,22 @@ const Statistics: React.FC = () => {
         minutes,
       };
     }).sort((a, b) => b.pomodoros - a.pomodoros);
-  }, [projects, filteredTasks, filteredSessions]);
+  }, [projects, filteredTasks, sessionsByTask]);
 
   // Calculate tag statistics
   const tagStats = useMemo((): TagWithStats[] => {
     return tags.map(tag => {
       const tagTasks = filteredTasks.filter(task => task.tags && task.tags.includes(tag.id));
-      const tagTaskIds = new Set(tagTasks.map(t => t.id));
-      const tagSessions = filteredSessions.filter(s => tagTaskIds.has(s.taskId));
-      const pomodoros = tagSessions.length;
-      const minutes = tagSessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+      // Use lookup map to aggregate session data
+      let pomodoros = 0;
+      let minutes = 0;
+      tagTasks.forEach(task => {
+        const sessionData = sessionsByTask.get(task.id);
+        if (sessionData) {
+          pomodoros += sessionData.count;
+          minutes += sessionData.totalMinutes;
+        }
+      });
       return {
         ...tag,
         taskCount: tagTasks.length,
@@ -225,7 +249,7 @@ const Statistics: React.FC = () => {
         minutes,
       };
     }).sort((a, b) => b.pomodoros - a.pomodoros);
-  }, [tags, filteredTasks, filteredSessions]);
+  }, [tags, filteredTasks, sessionsByTask]);
 
   const formatTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -241,7 +265,7 @@ const Statistics: React.FC = () => {
       <View style={styles.statItemContent}>
         <Text style={styles.statItemTitle}>{item.title}</Text>
         <Text style={styles.statItemSubtitle}>
-          {item.completedPomodoros || 0} pomodoros • {formatTime(item.minutes)}
+          {item.pomodorosInPeriod} pomodoros • {formatTime(item.minutesInPeriod)}
         </Text>
       </View>
       <MaterialIcons name="timer" size={20} color="#e74c3c" />

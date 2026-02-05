@@ -171,9 +171,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     setTasks(updatedTasks);
     await saveTasks(updatedTasks);
     
-    // Create pomodoro session record
+    // Create pomodoro session record with more robust ID
     const newSession: PomodoroSession = {
-      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`,
       taskId,
       completedAt: now,
       durationMinutes,
