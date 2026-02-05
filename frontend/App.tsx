@@ -16,6 +16,7 @@ import TasksPage from './src/components/TasksPage';
 import Settings from './src/components/Settings';
 import Statistics from './src/components/Statistics';
 import { requestNotificationPermissions } from './src/utils/notifications';
+import { logError } from './src/utils/errorLogger';
 
 type Tab = 'timer' | 'tasks' | 'stats' | 'settings';
 
@@ -25,20 +26,24 @@ export default function App() {
   // Request notification permissions on app startup
   useEffect(() => {
     const setupNotifications = async () => {
-      // Request permissions
-      await requestNotificationPermissions();
-      
-      // Set up Android notification channel
-      if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('timer-notifications', {
-          name: 'Timer Notifications',
-          importance: Notifications.AndroidImportance.HIGH,
-          sound: 'default',
-          vibrationPattern: [0, 250, 250, 250],
-          enableVibrate: true,
-          enableLights: true,
-          lightColor: '#e74c3c',
-        });
+      try {
+        // Request permissions
+        await requestNotificationPermissions();
+        
+        // Set up Android notification channel
+        if (Platform.OS === 'android') {
+          await Notifications.setNotificationChannelAsync('timer-notifications', {
+            name: 'Timer Notifications',
+            importance: Notifications.AndroidImportance.HIGH,
+            sound: 'default',
+            vibrationPattern: [0, 250, 250, 250],
+            enableVibrate: true,
+            enableLights: true,
+            lightColor: '#e74c3c',
+          });
+        }
+      } catch (error) {
+        logError('Failed to setup notifications', 'App.setupNotifications', error);
       }
     };
     

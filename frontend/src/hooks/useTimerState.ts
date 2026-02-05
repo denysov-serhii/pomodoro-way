@@ -81,14 +81,17 @@ export const useTimerState = () => {
           setStartTime(now); // Reset start time to now for accurate sync
           setSessionType(savedState.sessionType || 'pomodoro');
           setCompletedPomodoros(savedState.completedPomodoros || 0);
+          
+          // Find and set current task if it exists
+          let restoredTask = null;
           if (savedState.taskId) {
-            const task = tasks.find(t => t.id === savedState.taskId);
-            if (task) setCurrentTask(task);
+            restoredTask = tasks.find(t => t.id === savedState.taskId);
+            if (restoredTask) setCurrentTask(restoredTask);
           }
 
           // Schedule notification for remaining time
           if (savedState.sessionType === 'pomodoro') {
-            schedulePomodoroCompleteNotification(remainingTime, tasks.find(t => t.id === savedState.taskId)?.title).catch(error => {
+            schedulePomodoroCompleteNotification(remainingTime, restoredTask?.title).catch(error => {
               logError('Failed to schedule notification on restore', 'useTimerState.loadSavedState', error);
             });
           } else {

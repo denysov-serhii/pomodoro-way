@@ -120,6 +120,8 @@ export const sendBreakCompleteNotification = async (
  * @param body - Notification body
  * @param seconds - Number of seconds until notification should fire
  * @returns The notification identifier for potential cancellation
+ * @note Android only - iOS requires different implementation with Background Tasks API,
+ *       and web uses browser notifications which are not implemented in this app
  */
 export const scheduleTimerNotification = async (
   title: string,
@@ -127,7 +129,7 @@ export const scheduleTimerNotification = async (
   seconds: number
 ): Promise<string | null> => {
   try {
-    // Only schedule notifications on Android (web/iOS can use other mechanisms)
+    // Only schedule notifications on Android
     if (Platform.OS !== 'android') {
       return null;
     }
