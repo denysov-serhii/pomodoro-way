@@ -191,10 +191,8 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
               </TouchableOpacity>
             </View>
           </View>
-          
-          {item.description && (
-            <Text style={styles.taskDescription}>{item.description}</Text>
-          )}
+
+          <Text style={styles.taskDescription}>{item.description || ""}</Text>
 
           <View style={styles.taskMeta}>
             <View style={styles.pomodoroInfo}>
