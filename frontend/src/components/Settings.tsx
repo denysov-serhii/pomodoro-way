@@ -262,7 +262,7 @@ const Settings: React.FC = () => {
           <Text style={styles.sectionTitle}>Error Logs</Text>
         </View>
         <Text style={styles.sectionDescription}>
-          Download error logs for debugging and support ({errorLogCount} error{errorLogCount !== 1 ? 's' : ''})
+          {`Download error logs for debugging and support (${errorLogCount} error${errorLogCount !== 1 ? 's' : ''})`}
         </Text>
         <View style={styles.backupButtons}>
           <TouchableOpacity style={styles.exportButton} onPress={handleExportErrorLogs}>
@@ -297,7 +297,7 @@ const Settings: React.FC = () => {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>{APP_NAME} v{APP_VERSION}</Text>
+        <Text style={styles.footerText}>{`${APP_NAME} v${APP_VERSION}`}</Text>
         <Text style={styles.footerSubtext}>Focus & Productivity</Text>
       </View>
     </ScrollView>
