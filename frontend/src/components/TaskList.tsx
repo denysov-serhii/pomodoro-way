@@ -144,247 +144,142 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
     ...tasksWithoutFolder.map(task => ({ type: 'task' as const, data: task })),
   ];
 
-  const renderStarredTask = (item: Task) => {
-    const isSelected = currentTask?.id === item.id;
-    const isExpanded = expandedStarredTaskId === item.id;
-    const projectName = getProjectName(item.projectId);
-    const tagNames = getTagNames(item.tags);
+  // Shared task renderer to avoid code duplication
+  const createTaskRenderer = (
+    getExpanded: (taskId: string) => boolean,
+    setExpanded: (taskId: string | null) => void
+  ) => {
+    return (item: Task) => {
+      const isSelected = currentTask?.id === item.id;
+      const isExpanded = getExpanded(item.id);
+      const projectName = getProjectName(item.projectId);
+      const tagNames = getTagNames(item.tags);
 
-    return (
-      <TouchableOpacity
-        style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
-        onPress={() => {
-          const now = Date.now();
-          
-          // Check for double-click
-          if (lastTappedTaskId === item.id && now - lastTapTime < DOUBLE_CLICK_DELAY) {
-            // Double-click detected - navigate to timer
-            setCurrentTask(item);
-            onNavigateToTimer();
-            setLastTapTime(0);
-            setLastTappedTaskId(null);
-          } else {
-            // Single click - update tracking and expand/collapse
-            setLastTapTime(now);
-            setLastTappedTaskId(item.id);
+      return (
+        <TouchableOpacity
+          style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
+          onPress={() => {
+            const now = Date.now();
             
-            // Always set current task on single click
-            setCurrentTask(item);
-            
-            // Toggle expansion for starred section
-            const willBeExpanded = !isExpanded;
-            setExpandedStarredTaskId(willBeExpanded ? item.id : null);
-          }
-        }}
-      >
-        <View style={styles.taskContent}>
-          <View style={styles.taskHeader}>
-            {(isExpanded || item.isStarred) && (
-              <TouchableOpacity 
-                onPress={(e: GestureResponderEvent) => {
-                  e.stopPropagation();
-                  handleToggleStar(item.id);
-                }}
-                style={styles.starButton}
-              >
-                <MaterialIcons 
-                  name={item.isStarred ? "star" : "star-border"} 
-                  size={24} 
-                  color={item.isStarred ? "#f39c12" : "#95a5a6"} 
-                />
-              </TouchableOpacity>
-            )}
-            <Text style={[styles.taskTitle, isSelected && styles.taskTitleSelected]}>
-              {item.title}
-            </Text>
-            {isExpanded && (
-              <View style={styles.taskActions}>
+            // Check for double-click
+            if (lastTappedTaskId === item.id && now - lastTapTime < DOUBLE_CLICK_DELAY) {
+              // Double-click detected - navigate to timer
+              setCurrentTask(item);
+              onNavigateToTimer();
+              setLastTapTime(0);
+              setLastTappedTaskId(null);
+            } else {
+              // Single click - update tracking and expand/collapse
+              setLastTapTime(now);
+              setLastTappedTaskId(item.id);
+              
+              // Always set current task on single click
+              setCurrentTask(item);
+              
+              // Toggle expansion
+              const willBeExpanded = !isExpanded;
+              setExpanded(willBeExpanded ? item.id : null);
+            }
+          }}
+        >
+          <View style={styles.taskContent}>
+            <View style={styles.taskHeader}>
+              {(isExpanded || item.isStarred) && (
                 <TouchableOpacity 
                   onPress={(e: GestureResponderEvent) => {
                     e.stopPropagation();
-                    setEditingTask(item);
+                    handleToggleStar(item.id);
                   }}
-                  style={styles.actionButton}
+                  style={styles.starButton}
                 >
-                  <MaterialIcons name="edit" size={24} color="#3498db" />
+                  <MaterialIcons 
+                    name={item.isStarred ? "star" : "star-border"} 
+                    size={24} 
+                    color={item.isStarred ? "#f39c12" : "#95a5a6"} 
+                  />
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  onPress={(e: GestureResponderEvent) => {
-                    e.stopPropagation();
-                    handleCompleteTask(item.id, item.title);
-                  }}
-                  style={styles.actionButton}
-                >
-                  <MaterialIcons name="check-circle" size={24} color="#27ae60" />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  onPress={(e: GestureResponderEvent) => {
-                    e.stopPropagation();
-                    handleDeleteTask(item.id, item.title);
-                  }}
-                  style={styles.actionButton}
-                >
-                  <MaterialIcons name="delete" size={24} color="#e74c3c" />
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          <Text style={styles.taskDescription}>{item.description || ""}</Text>
-
-          <View style={styles.taskMeta}>
-            <View style={styles.pomodoroInfo}>
-              <MaterialIcons name="timer" size={16} color="#e74c3c" />
-              <Text 
-                style={styles.pomodoroText}
-                accessibilityLabel={`${item.completedPomodoros || 0} pomodoros`}
-              >
-                {item.completedPomodoros || 0}
+              )}
+              <Text style={[styles.taskTitle, isSelected && styles.taskTitleSelected]}>
+                {item.title}
               </Text>
+              {isExpanded && (
+                <View style={styles.taskActions}>
+                  <TouchableOpacity 
+                    onPress={(e: GestureResponderEvent) => {
+                      e.stopPropagation();
+                      setEditingTask(item);
+                    }}
+                    style={styles.actionButton}
+                  >
+                    <MaterialIcons name="edit" size={24} color="#3498db" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={(e: GestureResponderEvent) => {
+                      e.stopPropagation();
+                      handleCompleteTask(item.id, item.title);
+                    }}
+                    style={styles.actionButton}
+                  >
+                    <MaterialIcons name="check-circle" size={24} color="#27ae60" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={(e: GestureResponderEvent) => {
+                      e.stopPropagation();
+                      handleDeleteTask(item.id, item.title);
+                    }}
+                    style={styles.actionButton}
+                  >
+                    <MaterialIcons name="delete" size={24} color="#e74c3c" />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
-            {projectName && (
-              <View style={styles.projectBadge}>
-                <MaterialIcons name="folder" size={14} color="#3498db" />
-                <Text style={styles.projectText}>{projectName}</Text>
-              </View>
-            )}
-            
-            {tagNames.length > 0 && (
-              <View style={styles.tagsContainer}>
-                {tagNames.map((tagName, index) => (
-                  <View key={index} style={styles.tagBadge}>
-                    <Text style={styles.tagText}>#{tagName}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+            <Text style={styles.taskDescription}>{item.description || ""}</Text>
 
-  const renderTask = (item: Task) => {
-    const isSelected = currentTask?.id === item.id;
-    const isExpanded = expandedTaskId === item.id;
-    const projectName = getProjectName(item.projectId);
-    const tagNames = getTagNames(item.tags);
-
-    return (
-      <TouchableOpacity
-        style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
-        onPress={() => {
-          const now = Date.now();
-          
-          // Check for double-click
-          if (lastTappedTaskId === item.id && now - lastTapTime < DOUBLE_CLICK_DELAY) {
-            // Double-click detected - navigate to timer
-            setCurrentTask(item);
-            onNavigateToTimer();
-            setLastTapTime(0);
-            setLastTappedTaskId(null);
-          } else {
-            // Single click - update tracking and expand/collapse
-            setLastTapTime(now);
-            setLastTappedTaskId(item.id);
-            
-            // Always set current task on single click
-            setCurrentTask(item);
-            
-            // Toggle expansion
-            const willBeExpanded = !isExpanded;
-            setExpandedTaskId(willBeExpanded ? item.id : null);
-          }
-        }}
-      >
-        <View style={styles.taskContent}>
-          <View style={styles.taskHeader}>
-            {(isExpanded || item.isStarred) && (
-              <TouchableOpacity 
-                onPress={(e: GestureResponderEvent) => {
-                  e.stopPropagation();
-                  handleToggleStar(item.id);
-                }}
-                style={styles.starButton}
-              >
-                <MaterialIcons 
-                  name={item.isStarred ? "star" : "star-border"} 
-                  size={24} 
-                  color={item.isStarred ? "#f39c12" : "#95a5a6"} 
-                />
-              </TouchableOpacity>
-            )}
-            <Text style={[styles.taskTitle, isSelected && styles.taskTitleSelected]}>
-              {item.title}
-            </Text>
-            {isExpanded && (
-              <View style={styles.taskActions}>
-                <TouchableOpacity 
-                  onPress={(e: GestureResponderEvent) => {
-                    e.stopPropagation();
-                    setEditingTask(item);
-                  }}
-                  style={styles.actionButton}
+            <View style={styles.taskMeta}>
+              <View style={styles.pomodoroInfo}>
+                <MaterialIcons name="timer" size={16} color="#e74c3c" />
+                <Text 
+                  style={styles.pomodoroText}
+                  accessibilityLabel={`${item.completedPomodoros || 0} pomodoros`}
                 >
-                  <MaterialIcons name="edit" size={24} color="#3498db" />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  onPress={(e: GestureResponderEvent) => {
-                    e.stopPropagation();
-                    handleCompleteTask(item.id, item.title);
-                  }}
-                  style={styles.actionButton}
-                >
-                  <MaterialIcons name="check-circle" size={24} color="#27ae60" />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  onPress={(e: GestureResponderEvent) => {
-                    e.stopPropagation();
-                    handleDeleteTask(item.id, item.title);
-                  }}
-                  style={styles.actionButton}
-                >
-                  <MaterialIcons name="delete" size={24} color="#e74c3c" />
-                </TouchableOpacity>
+                  {item.completedPomodoros || 0}
+                </Text>
               </View>
-            )}
-          </View>
 
-          <Text style={styles.taskDescription}>{item.description || ""}</Text>
-
-          <View style={styles.taskMeta}>
-            <View style={styles.pomodoroInfo}>
-              <MaterialIcons name="timer" size={16} color="#e74c3c" />
-              <Text 
-                style={styles.pomodoroText}
-                accessibilityLabel={`${item.completedPomodoros || 0} pomodoros`}
-              >
-                {item.completedPomodoros || 0}
-              </Text>
+              {projectName && (
+                <View style={styles.projectBadge}>
+                  <MaterialIcons name="folder" size={14} color="#3498db" />
+                  <Text style={styles.projectText}>{projectName}</Text>
+                </View>
+              )}
+              
+              {tagNames.length > 0 && (
+                <View style={styles.tagsContainer}>
+                  {tagNames.map((tagName, index) => (
+                    <View key={index} style={styles.tagBadge}>
+                      <Text style={styles.tagText}>#{tagName}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
-
-            {projectName && (
-              <View style={styles.projectBadge}>
-                <MaterialIcons name="folder" size={14} color="#3498db" />
-                <Text style={styles.projectText}>{projectName}</Text>
-              </View>
-            )}
-            
-            {tagNames.length > 0 && (
-              <View style={styles.tagsContainer}>
-                {tagNames.map((tagName, index) => (
-                  <View key={index} style={styles.tagBadge}>
-                    <Text style={styles.tagText}>#{tagName}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
           </View>
-        </View>
-      </TouchableOpacity>
-    );
+        </TouchableOpacity>
+      );
+    };
   };
+
+  const renderStarredTask = createTaskRenderer(
+    (taskId) => expandedStarredTaskId === taskId,
+    setExpandedStarredTaskId
+  );
+
+  const renderTask = createTaskRenderer(
+    (taskId) => expandedTaskId === taskId,
+    setExpandedTaskId
+  );
 
   const renderFolder = (folder: Folder) => {
     const taskCount = getFolderTaskCount(folder.id);

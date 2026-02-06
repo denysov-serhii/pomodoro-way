@@ -61,6 +61,17 @@ const TaskSelector: React.FC = () => {
     return groups;
   }, [tasks, folders]);
 
+  // Auto-expand the folder containing the current task when modal opens
+  React.useEffect(() => {
+    if (showTaskSelector && currentTask && expandedFolderId === null) {
+      const currentTaskFolderId = currentTask.folderId || 'no-folder';
+      setExpandedFolderId(currentTaskFolderId);
+    } else if (!showTaskSelector) {
+      // Reset expansion when modal closes
+      setExpandedFolderId(null);
+    }
+  }, [showTaskSelector, currentTask, expandedFolderId]);
+
   return (
     <View>
       <TouchableOpacity 
