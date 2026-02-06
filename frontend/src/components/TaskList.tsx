@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   GestureResponderEvent,
-  ScrollView,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
@@ -19,9 +18,6 @@ import { Task, Folder } from '../types';
 import { sortTasks } from '../utils/taskSorting';
 
 const DOUBLE_CLICK_DELAY = 300; // milliseconds
-// Starred section heights: section (300px) = header + border + padding + tasks container (250px)
-const STARRED_SECTION_MAX_HEIGHT = 300; // pixels
-const STARRED_TASKS_MAX_HEIGHT = 250; // pixels
 
 interface TaskListProps {
   onAddTask: () => void;
@@ -368,17 +364,11 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
             <MaterialIcons name="star" size={20} color="#f39c12" />
             <Text style={styles.starredHeaderText}>Starred Tasks</Text>
           </View>
-          <ScrollView 
-            style={styles.starredTasksContainer}
-            nestedScrollEnabled={true}
-            showsVerticalScrollIndicator={true}
-          >
-            {starredTasks.map((task) => (
-              <View key={task.id}>
-                {renderStarredTask(task)}
-              </View>
-            ))}
-          </ScrollView>
+          {starredTasks.map((task) => (
+            <View key={task.id}>
+              {renderStarredTask(task)}
+            </View>
+          ))}
         </View>
       )}
 
@@ -683,10 +673,6 @@ const styles = StyleSheet.create({
     padding: 10,
     margin: 10,
     marginBottom: 5,
-    maxHeight: STARRED_SECTION_MAX_HEIGHT,
-  },
-  starredTasksContainer: {
-    maxHeight: STARRED_TASKS_MAX_HEIGHT,
   },
   starredHeader: {
     flexDirection: 'row',
