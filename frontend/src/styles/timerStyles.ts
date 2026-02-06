@@ -213,11 +213,15 @@ export const timerStyles = StyleSheet.create({
   taskOptionContent: {
     flex: 1,
   },
+  taskOptionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   taskOptionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#2c3e50',
-    marginBottom: 4,
   },
   taskOptionDescription: {
     fontSize: 14,
