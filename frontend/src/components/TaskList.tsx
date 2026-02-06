@@ -166,10 +166,11 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
             setLastTapTime(now);
             setLastTappedTaskId(item.id);
             
+            // Always set current task on single click
+            setCurrentTask(item);
+            
+            // Toggle expansion
             const willBeExpanded = !isExpanded;
-            if (willBeExpanded) {
-              setCurrentTask(item);
-            }
             setExpandedTaskId(willBeExpanded ? item.id : null);
           }
         }}

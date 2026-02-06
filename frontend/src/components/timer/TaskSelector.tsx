@@ -138,7 +138,13 @@ const TaskSelector: React.FC = () => {
                         <View style={styles.taskOptionContent}>
                           <View style={styles.taskOptionTitleRow}>
                             {task.isStarred && (
-                              <MaterialIcons name="star" size={16} color="#f39c12" style={styles.starIcon} />
+                              <MaterialIcons 
+                                name="star" 
+                                size={16} 
+                                color="#f39c12" 
+                                style={styles.starIcon}
+                                accessibilityLabel="Starred task"
+                              />
                             )}
                             <Text style={styles.taskOptionTitle}>{task.title}</Text>
                           </View>
