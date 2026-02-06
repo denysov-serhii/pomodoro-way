@@ -19,6 +19,8 @@ import { Task, Folder } from '../types';
 import { sortTasks } from '../utils/taskSorting';
 
 const DOUBLE_CLICK_DELAY = 300; // milliseconds
+const STARRED_SECTION_MAX_HEIGHT = 300; // pixels
+const STARRED_TASKS_MAX_HEIGHT = 250; // pixels
 
 interface TaskListProps {
   onAddTask: () => void;
@@ -680,10 +682,10 @@ const styles = StyleSheet.create({
     padding: 10,
     margin: 10,
     marginBottom: 5,
-    maxHeight: 300,
+    maxHeight: STARRED_SECTION_MAX_HEIGHT,
   },
   starredTasksContainer: {
-    maxHeight: 250,
+    maxHeight: STARRED_TASKS_MAX_HEIGHT,
   },
   starredHeader: {
     flexDirection: 'row',

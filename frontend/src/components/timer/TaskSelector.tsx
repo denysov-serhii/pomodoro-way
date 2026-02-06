@@ -128,34 +128,34 @@ const TaskSelector: React.FC = () => {
               <FlatList
                 data={groupedTasks}
                 keyExtractor={(group) => group.folderId || 'no-folder'}
-                renderItem={({ item: group }) => (
-                  <View>
-                    <TouchableOpacity 
-                      style={styles.folderHeader}
-                      onPress={() => {
-                        if (expandedFolderId === (group.folderId || 'no-folder')) {
-                          setExpandedFolderId(null);
-                        } else {
-                          setExpandedFolderId(group.folderId || 'no-folder');
-                        }
-                      }}
-                    >
-                      <MaterialIcons 
-                        name={group.folderId ? "folder" : "inbox"} 
-                        size={18} 
-                        color={group.folderId ? "#f39c12" : "#95a5a6"} 
-                      />
-                      <Text style={styles.folderHeaderText}>{group.folderName}</Text>
-                      <Text style={styles.folderTaskCount}>({group.tasks.length})</Text>
-                      <MaterialIcons 
-                        name={expandedFolderId === (group.folderId || 'no-folder') ? "expand-less" : "expand-more"} 
-                        size={24} 
-                        color="#7f8c8d" 
-                        style={styles.expandIcon}
-                      />
-                    </TouchableOpacity>
-                    {expandedFolderId === (group.folderId || 'no-folder') && group.tasks.map((task) => (
-                      <TouchableOpacity
+                renderItem={({ item: group }) => {
+                  const folderId = group.folderId || 'no-folder';
+                  const isExpanded = expandedFolderId === folderId;
+                  
+                  return (
+                    <View>
+                      <TouchableOpacity 
+                        style={styles.folderHeader}
+                        onPress={() => {
+                          setExpandedFolderId(isExpanded ? null : folderId);
+                        }}
+                      >
+                        <MaterialIcons 
+                          name={group.folderId ? "folder" : "inbox"} 
+                          size={18} 
+                          color={group.folderId ? "#f39c12" : "#95a5a6"} 
+                        />
+                        <Text style={styles.folderHeaderText}>{group.folderName}</Text>
+                        <Text style={styles.folderTaskCount}>({group.tasks.length})</Text>
+                        <MaterialIcons 
+                          name={isExpanded ? "expand-less" : "expand-more"} 
+                          size={24} 
+                          color="#7f8c8d" 
+                          style={styles.expandIcon}
+                        />
+                      </TouchableOpacity>
+                      {isExpanded && group.tasks.map((task) => (
+                        <TouchableOpacity
                         key={task.id}
                         style={[
                           styles.taskOption,
@@ -192,9 +192,10 @@ const TaskSelector: React.FC = () => {
                           <MaterialIcons name="check-circle" size={24} color="#27ae60" />
                         )}
                       </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                      ))}
+                    </View>
+                  );
+                }}
               />
             )}
 
