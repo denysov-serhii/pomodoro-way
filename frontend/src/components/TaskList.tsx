@@ -17,6 +17,8 @@ import EditTaskModal from './EditTaskModal';
 import { Task, Folder } from '../types';
 import { sortTasks } from '../utils/taskSorting';
 
+const DOUBLE_CLICK_DELAY = 300; // milliseconds
+
 interface TaskListProps {
   onAddTask: () => void;
   onNavigateToTimer: () => void;
@@ -151,7 +153,6 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
         style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
         onPress={() => {
           const now = Date.now();
-          const DOUBLE_CLICK_DELAY = 300; // milliseconds
           
           // Check for double-click
           if (lastTappedTaskId === item.id && now - lastTapTime < DOUBLE_CLICK_DELAY) {

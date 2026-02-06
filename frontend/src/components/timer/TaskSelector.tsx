@@ -3,6 +3,13 @@ import { View, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../../contexts/AppContext';
 import { timerStyles as styles } from '../../styles/timerStyles';
+import { Task } from '../../types';
+
+interface TaskGroup {
+  folderId: string | null;
+  folderName: string;
+  tasks: Task[];
+}
 
 const TaskSelector: React.FC = () => {
   const context = useContext(AppContext);
@@ -13,7 +20,7 @@ const TaskSelector: React.FC = () => {
   const [showTaskSelector, setShowTaskSelector] = useState<boolean>(false);
 
   // Group tasks by folder
-  const groupedTasks: { folderId: string | null; folderName: string; tasks: typeof tasks }[] = [];
+  const groupedTasks: TaskGroup[] = [];
   
   // Get all unique folder IDs from tasks
   const folderIds = new Set<string | null>();
