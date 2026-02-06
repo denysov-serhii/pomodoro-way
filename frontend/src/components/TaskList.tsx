@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   GestureResponderEvent,
+  ScrollView,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
@@ -40,6 +41,7 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [expandedStarredTaskId, setExpandedStarredTaskId] = useState<string | null>(null);
   const [lastTapTime, setLastTapTime] = useState<number>(0);
   const [lastTappedTaskId, setLastTappedTaskId] = useState<string | null>(null);
 
@@ -141,6 +143,127 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
     ...folders.map(folder => ({ type: 'folder' as const, data: folder })),
     ...tasksWithoutFolder.map(task => ({ type: 'task' as const, data: task })),
   ];
+
+  const renderStarredTask = (item: Task) => {
+    const isSelected = currentTask?.id === item.id;
+    const isExpanded = expandedStarredTaskId === item.id;
+    const projectName = getProjectName(item.projectId);
+    const tagNames = getTagNames(item.tags);
+
+    return (
+      <TouchableOpacity
+        style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
+        onPress={() => {
+          const now = Date.now();
+          
+          // Check for double-click
+          if (lastTappedTaskId === item.id && now - lastTapTime < DOUBLE_CLICK_DELAY) {
+            // Double-click detected - navigate to timer
+            setCurrentTask(item);
+            onNavigateToTimer();
+            setLastTapTime(0);
+            setLastTappedTaskId(null);
+          } else {
+            // Single click - update tracking and expand/collapse
+            setLastTapTime(now);
+            setLastTappedTaskId(item.id);
+            
+            // Always set current task on single click
+            setCurrentTask(item);
+            
+            // Toggle expansion for starred section
+            const willBeExpanded = !isExpanded;
+            setExpandedStarredTaskId(willBeExpanded ? item.id : null);
+          }
+        }}
+      >
+        <View style={styles.taskContent}>
+          <View style={styles.taskHeader}>
+            {(isExpanded || item.isStarred) && (
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  handleToggleStar(item.id);
+                }}
+                style={styles.starButton}
+              >
+                <MaterialIcons 
+                  name={item.isStarred ? "star" : "star-border"} 
+                  size={24} 
+                  color={item.isStarred ? "#f39c12" : "#95a5a6"} 
+                />
+              </TouchableOpacity>
+            )}
+            <Text style={[styles.taskTitle, isSelected && styles.taskTitleSelected]}>
+              {item.title}
+            </Text>
+            {isExpanded && (
+              <View style={styles.taskActions}>
+                <TouchableOpacity 
+                  onPress={(e: GestureResponderEvent) => {
+                    e.stopPropagation();
+                    setEditingTask(item);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <MaterialIcons name="edit" size={24} color="#3498db" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={(e: GestureResponderEvent) => {
+                    e.stopPropagation();
+                    handleCompleteTask(item.id, item.title);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <MaterialIcons name="check-circle" size={24} color="#27ae60" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={(e: GestureResponderEvent) => {
+                    e.stopPropagation();
+                    handleDeleteTask(item.id, item.title);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <MaterialIcons name="delete" size={24} color="#e74c3c" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.taskDescription}>{item.description || ""}</Text>
+
+          <View style={styles.taskMeta}>
+            <View style={styles.pomodoroInfo}>
+              <MaterialIcons name="timer" size={16} color="#e74c3c" />
+              <Text 
+                style={styles.pomodoroText}
+                accessibilityLabel={`${item.completedPomodoros || 0} pomodoros`}
+              >
+                {item.completedPomodoros || 0}
+              </Text>
+            </View>
+
+            {projectName && (
+              <View style={styles.projectBadge}>
+                <MaterialIcons name="folder" size={14} color="#3498db" />
+                <Text style={styles.projectText}>{projectName}</Text>
+              </View>
+            )}
+            
+            {tagNames.length > 0 && (
+              <View style={styles.tagsContainer}>
+                {tagNames.map((tagName, index) => (
+                  <View key={index} style={styles.tagBadge}>
+                    <Text style={styles.tagText}>#{tagName}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderTask = (item: Task) => {
     const isSelected = currentTask?.id === item.id;
@@ -347,11 +470,17 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
             <MaterialIcons name="star" size={20} color="#f39c12" />
             <Text style={styles.starredHeaderText}>Starred Tasks</Text>
           </View>
-          {starredTasks.map((task) => (
-            <View key={task.id}>
-              {renderTask(task)}
-            </View>
-          ))}
+          <ScrollView 
+            style={styles.starredTasksContainer}
+            nestedScrollEnabled={true}
+            showsVerticalScrollIndicator={true}
+          >
+            {starredTasks.map((task) => (
+              <View key={task.id}>
+                {renderStarredTask(task)}
+              </View>
+            ))}
+          </ScrollView>
         </View>
       )}
 
@@ -656,6 +785,10 @@ const styles = StyleSheet.create({
     padding: 10,
     margin: 10,
     marginBottom: 5,
+    maxHeight: 300,
+  },
+  starredTasksContainer: {
+    maxHeight: 250,
   },
   starredHeader: {
     flexDirection: 'row',

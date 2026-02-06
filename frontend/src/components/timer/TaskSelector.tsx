@@ -18,6 +18,7 @@ const TaskSelector: React.FC = () => {
   }
   const { currentTask, setCurrentTask, tasks, folders } = context;
   const [showTaskSelector, setShowTaskSelector] = useState<boolean>(false);
+  const [expandedFolderId, setExpandedFolderId] = useState<string | null>(null);
 
   // Group tasks by folder using a single pass for better performance
   const groupedTasks: TaskGroup[] = React.useMemo(() => {
@@ -118,15 +119,31 @@ const TaskSelector: React.FC = () => {
                 keyExtractor={(group) => group.folderId || 'no-folder'}
                 renderItem={({ item: group }) => (
                   <View>
-                    <View style={styles.folderHeader}>
+                    <TouchableOpacity 
+                      style={styles.folderHeader}
+                      onPress={() => {
+                        if (expandedFolderId === (group.folderId || 'no-folder')) {
+                          setExpandedFolderId(null);
+                        } else {
+                          setExpandedFolderId(group.folderId || 'no-folder');
+                        }
+                      }}
+                    >
                       <MaterialIcons 
                         name={group.folderId ? "folder" : "inbox"} 
                         size={18} 
                         color={group.folderId ? "#f39c12" : "#95a5a6"} 
                       />
                       <Text style={styles.folderHeaderText}>{group.folderName}</Text>
-                    </View>
-                    {group.tasks.map((task) => (
+                      <Text style={styles.folderTaskCount}>({group.tasks.length})</Text>
+                      <MaterialIcons 
+                        name={expandedFolderId === (group.folderId || 'no-folder') ? "expand-less" : "expand-more"} 
+                        size={24} 
+                        color="#7f8c8d" 
+                        style={styles.expandIcon}
+                      />
+                    </TouchableOpacity>
+                    {expandedFolderId === (group.folderId || 'no-folder') && group.tasks.map((task) => (
                       <TouchableOpacity
                         key={task.id}
                         style={[

@@ -262,6 +262,15 @@ export const timerStyles = StyleSheet.create({
     fontWeight: '700',
     color: '#2c3e50',
     marginLeft: 8,
+    flex: 1,
+  },
+  folderTaskCount: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    marginRight: 8,
+  },
+  expandIcon: {
+    marginLeft: 'auto',
   },
   starIcon: {
     marginRight: 6,
