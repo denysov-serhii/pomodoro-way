@@ -213,11 +213,15 @@ export const timerStyles = StyleSheet.create({
   taskOptionContent: {
     flex: 1,
   },
+  taskOptionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   taskOptionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#2c3e50',
-    marginBottom: 4,
   },
   taskOptionDescription: {
     fontSize: 14,
@@ -243,5 +247,32 @@ export const timerStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#2c3e50',
+  },
+  folderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ecf0f1',
+  },
+  folderHeaderText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2c3e50',
+    marginLeft: 8,
+    flex: 1,
+  },
+  folderTaskCount: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    marginRight: 8,
+  },
+  expandIcon: {
+    marginLeft: 'auto',
+  },
+  starIcon: {
+    marginRight: 6,
   },
 });

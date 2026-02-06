@@ -25,10 +25,11 @@ const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId, onBack
   if (!context) {
     throw new Error('ProjectDetailPage must be used within AppProvider');
   }
-  const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask } = context;
+  const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask, completeTask, toggleStarTask } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   const project = projects.find(p => p.id === projectId);
   const projectTasks = tasks.filter(task => task.projectId === projectId);
@@ -56,41 +57,82 @@ const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId, onBack
     });
   };
 
+  const handleCompleteTask = (taskId: string, taskTitle: string) => {
+    showDialog({
+      title: 'Complete Task',
+      message: `Mark "${taskTitle}" as complete? It will be moved to the archive.`,
+      confirmText: 'Complete',
+      onConfirm: () => completeTask(taskId),
+    });
+  };
+
   const renderTask = ({ item }: { item: Task }) => {
     const isSelected = currentTask?.id === item.id;
+    const isExpanded = expandedTaskId === item.id;
     const folderName = getFolderName(item.folderId);
     const tagNames = getTagNames(item.tags);
 
     return (
       <TouchableOpacity
-        style={[styles.taskItem, isSelected && styles.taskItemSelected]}
-        onPress={() => setCurrentTask(item)}
+        style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
+        onPress={() => {
+          if (!isExpanded) {
+            setCurrentTask(item);
+          }
+          setExpandedTaskId(isExpanded ? null : item.id);
+        }}
       >
         <View style={styles.taskContent}>
           <View style={styles.taskHeader}>
+            {(isExpanded || item.isStarred) && (
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  toggleStarTask(item.id);
+                }}
+                style={styles.starButton}
+              >
+                <MaterialIcons 
+                  name={item.isStarred ? "star" : "star-border"} 
+                  size={24} 
+                  color={item.isStarred ? "#f39c12" : "#95a5a6"} 
+                />
+              </TouchableOpacity>
+            )}
             <Text style={[styles.taskTitle, isSelected && styles.taskTitleSelected]}>
               {item.title}
             </Text>
-            <View style={styles.taskActions}>
-              <TouchableOpacity 
-                onPress={(e: GestureResponderEvent) => {
-                  e.stopPropagation();
-                  setEditingTask(item);
-                }}
-                style={styles.actionButton}
-              >
-                <MaterialIcons name="edit" size={24} color="#3498db" />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={(e: GestureResponderEvent) => {
-                  e.stopPropagation();
-                  handleDeleteTask(item.id, item.title);
-                }}
-                style={styles.actionButton}
-              >
-                <MaterialIcons name="delete" size={24} color="#e74c3c" />
-              </TouchableOpacity>
-            </View>
+            {isExpanded && (
+              <View style={styles.taskActions}>
+                <TouchableOpacity 
+                  onPress={(e: GestureResponderEvent) => {
+                    e.stopPropagation();
+                    setEditingTask(item);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <MaterialIcons name="edit" size={24} color="#3498db" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={(e: GestureResponderEvent) => {
+                    e.stopPropagation();
+                    handleCompleteTask(item.id, item.title);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <MaterialIcons name="check-circle" size={24} color="#27ae60" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={(e: GestureResponderEvent) => {
+                    e.stopPropagation();
+                    handleDeleteTask(item.id, item.title);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <MaterialIcons name="delete" size={24} color="#e74c3c" />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
           
           {item.description && (
@@ -256,6 +298,15 @@ const styles = StyleSheet.create({
     borderColor: '#3498db',
     backgroundColor: '#ebf5fb',
   },
+  taskItemExpanded: {
+    paddingVertical: 15,
+    borderColor: '#3498db',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   taskContent: {
     flex: 1,
   },
@@ -264,6 +315,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 6,
+  },
+  starButton: {
+    marginRight: 8,
+    padding: 2,
   },
   taskActions: {
     flexDirection: 'row',
