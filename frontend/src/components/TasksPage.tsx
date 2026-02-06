@@ -12,20 +12,24 @@ import AddTaskModal from './AddTaskModal';
 
 type TasksTab = 'tasks' | 'projects' | 'tags';
 
-const TasksPage: React.FC = () => {
+interface TasksPageProps {
+  onNavigateToTimer: () => void;
+}
+
+const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToTimer }) => {
   const [activeTab, setActiveTab] = useState<TasksTab>('tasks');
   const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'tasks':
-        return <TaskList onAddTask={() => setShowAddTaskModal(true)} />;
+        return <TaskList onAddTask={() => setShowAddTaskModal(true)} onNavigateToTimer={onNavigateToTimer} />;
       case 'projects':
         return <ProjectsManager />;
       case 'tags':
         return <TagsManager />;
       default:
-        return <TaskList onAddTask={() => setShowAddTaskModal(true)} />;
+        return <TaskList onAddTask={() => setShowAddTaskModal(true)} onNavigateToTimer={onNavigateToTimer} />;
     }
   };
 

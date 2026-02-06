@@ -55,7 +55,7 @@ export default function App() {
       case 'timer':
         return <PomodoroTimer />;
       case 'tasks':
-        return <TasksPage />;
+        return <TasksPage onNavigateToTimer={() => setActiveTab('timer')} />;
       case 'stats':
         return <Statistics />;
       case 'settings':

@@ -30,6 +30,7 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   const folder = folders.find(f => f.id === folderId);
   const folderTasks = sortTasks(tasks.filter(task => task.folderId === folderId && !task.isCompleted));
@@ -85,61 +86,71 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
 
   const renderTask = ({ item }: { item: Task }) => {
     const isSelected = currentTask?.id === item.id;
+    const isExpanded = expandedTaskId === item.id;
     const projectName = getProjectName(item.projectId);
     const tagNames = getTagNames(item.tags);
 
     return (
       <TouchableOpacity
-        style={[styles.taskItem, isSelected && styles.taskItemSelected]}
-        onPress={() => setCurrentTask(item)}
+        style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
+        onPress={() => {
+          if (!isExpanded) {
+            setCurrentTask(item);
+          }
+          setExpandedTaskId(isExpanded ? null : item.id);
+        }}
       >
         <View style={styles.taskContent}>
           <View style={styles.taskHeader}>
-            <TouchableOpacity 
-              onPress={(e: GestureResponderEvent) => {
-                e.stopPropagation();
-                handleToggleStar(item.id);
-              }}
-              style={styles.starButton}
-            >
-              <MaterialIcons 
-                name={item.isStarred ? "star" : "star-border"} 
-                size={24} 
-                color={item.isStarred ? "#f39c12" : "#95a5a6"} 
-              />
-            </TouchableOpacity>
+            {(isExpanded || item.isStarred) && (
+              <TouchableOpacity 
+                onPress={(e: GestureResponderEvent) => {
+                  e.stopPropagation();
+                  handleToggleStar(item.id);
+                }}
+                style={styles.starButton}
+              >
+                <MaterialIcons 
+                  name={item.isStarred ? "star" : "star-border"} 
+                  size={24} 
+                  color={item.isStarred ? "#f39c12" : "#95a5a6"} 
+                />
+              </TouchableOpacity>
+            )}
             <Text style={[styles.taskTitle, isSelected && styles.taskTitleSelected]}>
               {item.title}
             </Text>
-            <View style={styles.taskActions}>
-              <TouchableOpacity 
-                onPress={(e: GestureResponderEvent) => {
-                  e.stopPropagation();
-                  setEditingTask(item);
-                }}
-                style={styles.actionButton}
-              >
-                <MaterialIcons name="edit" size={24} color="#3498db" />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={(e: GestureResponderEvent) => {
-                  e.stopPropagation();
-                  handleCompleteTask(item.id, item.title);
-                }}
-                style={styles.actionButton}
-              >
-                <MaterialIcons name="check-circle" size={24} color="#27ae60" />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={(e: GestureResponderEvent) => {
-                  e.stopPropagation();
-                  handleDeleteTask(item.id, item.title);
-                }}
-                style={styles.actionButton}
-              >
-                <MaterialIcons name="delete" size={24} color="#e74c3c" />
-              </TouchableOpacity>
-            </View>
+            {isExpanded && (
+              <View style={styles.taskActions}>
+                <TouchableOpacity 
+                  onPress={(e: GestureResponderEvent) => {
+                    e.stopPropagation();
+                    setEditingTask(item);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <MaterialIcons name="edit" size={24} color="#3498db" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={(e: GestureResponderEvent) => {
+                    e.stopPropagation();
+                    handleCompleteTask(item.id, item.title);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <MaterialIcons name="check-circle" size={24} color="#27ae60" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={(e: GestureResponderEvent) => {
+                    e.stopPropagation();
+                    handleDeleteTask(item.id, item.title);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <MaterialIcons name="delete" size={24} color="#e74c3c" />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
           
           {item.description && (
@@ -304,6 +315,15 @@ const styles = StyleSheet.create({
   taskItemSelected: {
     borderColor: '#3498db',
     backgroundColor: '#ebf5fb',
+  },
+  taskItemExpanded: {
+    paddingVertical: 15,
+    borderColor: '#3498db',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   taskContent: {
     flex: 1,
