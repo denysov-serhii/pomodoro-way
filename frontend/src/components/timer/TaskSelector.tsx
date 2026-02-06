@@ -19,36 +19,43 @@ const TaskSelector: React.FC = () => {
   const { currentTask, setCurrentTask, tasks, folders } = context;
   const [showTaskSelector, setShowTaskSelector] = useState<boolean>(false);
 
-  // Group tasks by folder
-  const groupedTasks: TaskGroup[] = [];
-  
-  // Get all unique folder IDs from tasks
-  const folderIds = new Set<string | null>();
-  tasks.forEach(task => {
-    if (!task.isCompleted) {
-      folderIds.add(task.folderId || null);
-    }
-  });
+  // Group tasks by folder using a single pass for better performance
+  const groupedTasks: TaskGroup[] = React.useMemo(() => {
+    const taskMap = new Map<string | null, Task[]>();
+    
+    // Group tasks by folderId in a single pass
+    tasks.forEach(task => {
+      if (!task.isCompleted) {
+        const folderId = task.folderId || null;
+        if (!taskMap.has(folderId)) {
+          taskMap.set(folderId, []);
+        }
+        taskMap.get(folderId)!.push(task);
+      }
+    });
 
-  // Create groups for each folder
-  folderIds.forEach(folderId => {
-    const folderTasks = tasks.filter(task => task.folderId === folderId && !task.isCompleted);
-    if (folderTasks.length > 0) {
-      const folder = folderId ? folders.find(f => f.id === folderId) : null;
-      groupedTasks.push({
-        folderId,
-        folderName: folder ? folder.name : 'No Folder',
-        tasks: folderTasks,
-      });
-    }
-  });
+    // Convert map to array and add folder names
+    const groups: TaskGroup[] = [];
+    taskMap.forEach((tasks, folderId) => {
+      if (tasks.length > 0) {
+        const folder = folderId ? folders.find(f => f.id === folderId) : null;
+        groups.push({
+          folderId,
+          folderName: folder ? folder.name : 'No Folder',
+          tasks,
+        });
+      }
+    });
 
-  // Sort groups: folders first (alphabetically), then "No Folder"
-  groupedTasks.sort((a, b) => {
-    if (a.folderId === null) return 1;
-    if (b.folderId === null) return -1;
-    return a.folderName.localeCompare(b.folderName);
-  });
+    // Sort groups: folders first (alphabetically), then "No Folder"
+    groups.sort((a, b) => {
+      if (a.folderId === null) return 1;
+      if (b.folderId === null) return -1;
+      return a.folderName.localeCompare(b.folderName);
+    });
+
+    return groups;
+  }, [tasks, folders]);
 
   return (
     <View>

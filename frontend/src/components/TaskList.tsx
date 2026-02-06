@@ -156,20 +156,21 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
           
           // Check for double-click
           if (lastTappedTaskId === item.id && now - lastTapTime < DOUBLE_CLICK_DELAY) {
-            // Double-click detected
+            // Double-click detected - navigate to timer
             setCurrentTask(item);
             onNavigateToTimer();
             setLastTapTime(0);
             setLastTappedTaskId(null);
           } else {
-            // Single click
+            // Single click - update tracking and expand/collapse
             setLastTapTime(now);
             setLastTappedTaskId(item.id);
             
-            if (!isExpanded) {
+            const willBeExpanded = !isExpanded;
+            if (willBeExpanded) {
               setCurrentTask(item);
             }
-            setExpandedTaskId(isExpanded ? null : item.id);
+            setExpandedTaskId(willBeExpanded ? item.id : null);
           }
         }}
       >
