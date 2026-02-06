@@ -19,13 +19,14 @@ import { sortTasks } from '../utils/taskSorting';
 
 interface TaskListProps {
   onAddTask: () => void;
+  onNavigateToTimer: () => void;
 }
 
 type ListItem = 
   | { type: 'folder'; data: Folder }
   | { type: 'task'; data: Task };
 
-const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
+const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('TaskList must be used within AppProvider');
@@ -37,6 +38,8 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [lastTapTime, setLastTapTime] = useState<number>(0);
+  const [lastTappedTaskId, setLastTappedTaskId] = useState<string | null>(null);
 
   // If a folder is selected, show folder detail page
   if (selectedFolderId) {
@@ -125,6 +128,9 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
     return tasks.filter((task) => task.folderId === folderId && !task.isCompleted).length;
   };
 
+  // Get starred tasks from all folders (not completed)
+  const starredTasks = sortTasks(tasks.filter(task => task.isStarred && !task.isCompleted));
+
   // Get tasks that are not in any folder and not completed
   const tasksWithoutFolder = sortTasks(tasks.filter(task => !task.folderId && !task.isCompleted));
 
@@ -144,15 +150,31 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
       <TouchableOpacity
         style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
         onPress={() => {
-          if (!isExpanded) {
+          const now = Date.now();
+          const DOUBLE_CLICK_DELAY = 300; // milliseconds
+          
+          // Check for double-click
+          if (lastTappedTaskId === item.id && now - lastTapTime < DOUBLE_CLICK_DELAY) {
+            // Double-click detected
             setCurrentTask(item);
+            onNavigateToTimer();
+            setLastTapTime(0);
+            setLastTappedTaskId(null);
+          } else {
+            // Single click
+            setLastTapTime(now);
+            setLastTappedTaskId(item.id);
+            
+            if (!isExpanded) {
+              setCurrentTask(item);
+            }
+            setExpandedTaskId(isExpanded ? null : item.id);
           }
-          setExpandedTaskId(isExpanded ? null : item.id);
         }}
       >
         <View style={styles.taskContent}>
           <View style={styles.taskHeader}>
-            {isExpanded && (
+            {(isExpanded || item.isStarred) && (
               <TouchableOpacity 
                 onPress={(e: GestureResponderEvent) => {
                   e.stopPropagation();
@@ -313,6 +335,20 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask }) => {
           >
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {starredTasks.length > 0 && (
+        <View style={styles.starredSection}>
+          <View style={styles.starredHeader}>
+            <MaterialIcons name="star" size={20} color="#f39c12" />
+            <Text style={styles.starredHeaderText}>Starred Tasks</Text>
+          </View>
+          {starredTasks.map((task) => (
+            <View key={task.id}>
+              {renderTask(task)}
+            </View>
+          ))}
         </View>
       )}
 
@@ -608,6 +644,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#bdc3c7',
     marginTop: 5,
+  },
+  starredSection: {
+    backgroundColor: '#fffbf0',
+    borderWidth: 2,
+    borderColor: '#f39c12',
+    borderRadius: 10,
+    padding: 10,
+    margin: 10,
+    marginBottom: 5,
+  },
+  starredHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f39c12',
+  },
+  starredHeaderText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2c3e50',
+    marginLeft: 8,
   },
 });
 

@@ -9,8 +9,39 @@ const TaskSelector: React.FC = () => {
   if (!context) {
     throw new Error('TaskSelector must be used within AppProvider');
   }
-  const { currentTask, setCurrentTask, tasks } = context;
+  const { currentTask, setCurrentTask, tasks, folders } = context;
   const [showTaskSelector, setShowTaskSelector] = useState<boolean>(false);
+
+  // Group tasks by folder
+  const groupedTasks: { folderId: string | null; folderName: string; tasks: typeof tasks }[] = [];
+  
+  // Get all unique folder IDs from tasks
+  const folderIds = new Set<string | null>();
+  tasks.forEach(task => {
+    if (!task.isCompleted) {
+      folderIds.add(task.folderId || null);
+    }
+  });
+
+  // Create groups for each folder
+  folderIds.forEach(folderId => {
+    const folderTasks = tasks.filter(task => task.folderId === folderId && !task.isCompleted);
+    if (folderTasks.length > 0) {
+      const folder = folderId ? folders.find(f => f.id === folderId) : null;
+      groupedTasks.push({
+        folderId,
+        folderName: folder ? folder.name : 'No Folder',
+        tasks: folderTasks,
+      });
+    }
+  });
+
+  // Sort groups: folders first (alphabetically), then "No Folder"
+  groupedTasks.sort((a, b) => {
+    if (a.folderId === null) return 1;
+    if (b.folderId === null) return -1;
+    return a.folderName.localeCompare(b.folderName);
+  });
 
   return (
     <View>
@@ -56,7 +87,7 @@ const TaskSelector: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-            {tasks.length === 0 ? (
+            {tasks.filter(t => !t.isCompleted).length === 0 ? (
               <View style={styles.emptyTasksContainer}>
                 <MaterialIcons name="inbox" size={64} color="#bdc3c7" />
                 <Text style={styles.emptyTasksText}>No tasks available</Text>
@@ -66,34 +97,52 @@ const TaskSelector: React.FC = () => {
               </View>
             ) : (
               <FlatList
-                data={tasks}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.taskOption,
-                      currentTask?.id === item.id && styles.taskOptionSelected,
-                    ]}
-                    onPress={() => {
-                      setCurrentTask(item);
-                      setShowTaskSelector(false);
-                    }}
-                  >
-                    <View style={styles.taskOptionContent}>
-                      <Text style={styles.taskOptionTitle}>{item.title}</Text>
-                      {item.description && (
-                        <Text style={styles.taskOptionDescription} numberOfLines={1}>
-                          {item.description}
-                        </Text>
-                      )}
-                      <Text style={styles.taskOptionPomodoros}>
-                        {item.completedPomodoros || 0} pomodoros completed
-                      </Text>
+                data={groupedTasks}
+                keyExtractor={(group) => group.folderId || 'no-folder'}
+                renderItem={({ item: group }) => (
+                  <View>
+                    <View style={styles.folderHeader}>
+                      <MaterialIcons 
+                        name={group.folderId ? "folder" : "inbox"} 
+                        size={18} 
+                        color={group.folderId ? "#f39c12" : "#95a5a6"} 
+                      />
+                      <Text style={styles.folderHeaderText}>{group.folderName}</Text>
                     </View>
-                    {currentTask?.id === item.id && (
-                      <MaterialIcons name="check-circle" size={24} color="#27ae60" />
-                    )}
-                  </TouchableOpacity>
+                    {group.tasks.map((task) => (
+                      <TouchableOpacity
+                        key={task.id}
+                        style={[
+                          styles.taskOption,
+                          currentTask?.id === task.id && styles.taskOptionSelected,
+                        ]}
+                        onPress={() => {
+                          setCurrentTask(task);
+                          setShowTaskSelector(false);
+                        }}
+                      >
+                        <View style={styles.taskOptionContent}>
+                          <View style={styles.taskTitleRow}>
+                            {task.isStarred && (
+                              <MaterialIcons name="star" size={16} color="#f39c12" style={styles.starIcon} />
+                            )}
+                            <Text style={styles.taskOptionTitle}>{task.title}</Text>
+                          </View>
+                          {task.description && (
+                            <Text style={styles.taskOptionDescription} numberOfLines={1}>
+                              {task.description}
+                            </Text>
+                          )}
+                          <Text style={styles.taskOptionPomodoros}>
+                            {task.completedPomodoros || 0} pomodoros completed
+                          </Text>
+                        </View>
+                        {currentTask?.id === task.id && (
+                          <MaterialIcons name="check-circle" size={24} color="#27ae60" />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 )}
               />
             )}

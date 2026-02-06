@@ -244,4 +244,22 @@ export const timerStyles = StyleSheet.create({
     fontWeight: '600',
     color: '#2c3e50',
   },
+  folderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ecf0f1',
+  },
+  folderHeaderText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2c3e50',
+    marginLeft: 8,
+  },
+  starIcon: {
+    marginRight: 6,
+  },
 });
