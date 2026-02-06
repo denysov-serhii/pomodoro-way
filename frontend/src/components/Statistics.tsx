@@ -39,7 +39,7 @@ const Statistics: React.FC = () => {
   }
   const { tasks, projects, tags, pomodoroSessions } = context;
 
-  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('all');
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('day');
 
   // Filter pomodoro sessions based on selected time period
   const filteredSessions = useMemo(() => {
