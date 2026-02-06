@@ -30,7 +30,10 @@ const TaskSelector: React.FC = () => {
         if (!taskMap.has(folderId)) {
           taskMap.set(folderId, []);
         }
-        taskMap.get(folderId)!.push(task);
+        const taskList = taskMap.get(folderId);
+        if (taskList) {
+          taskList.push(task);
+        }
       }
     });
 
