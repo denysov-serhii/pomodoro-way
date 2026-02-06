@@ -358,20 +358,6 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
         </View>
       )}
 
-      {starredTasks.length > 0 && (
-        <View style={styles.starredSection}>
-          <View style={styles.starredHeader}>
-            <MaterialIcons name="star" size={20} color="#f39c12" />
-            <Text style={styles.starredHeaderText}>Starred Tasks</Text>
-          </View>
-          {starredTasks.map((task) => (
-            <View key={task.id}>
-              {renderStarredTask(task)}
-            </View>
-          ))}
-        </View>
-      )}
-
       {listItems.length === 0 ? (
         <View style={styles.emptyContainer}>
           <MaterialIcons name="check-circle-outline" size={64} color="#bdc3c7" />
@@ -384,6 +370,21 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
           renderItem={renderItem}
           keyExtractor={(item) => item.type === 'folder' ? `folder-${item.data.id}` : `task-${item.data.id}`}
           contentContainerStyle={styles.listContainer}
+          ListHeaderComponent={
+            starredTasks.length > 0 ? (
+              <View style={styles.starredSection}>
+                <View style={styles.starredHeader}>
+                  <MaterialIcons name="star" size={20} color="#f39c12" />
+                  <Text style={styles.starredHeaderText}>Starred Tasks</Text>
+                </View>
+                {starredTasks.map((task) => (
+                  <View key={task.id}>
+                    {renderStarredTask(task)}
+                  </View>
+                ))}
+              </View>
+            ) : null
+          }
         />
       )}
 
