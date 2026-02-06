@@ -19,6 +19,7 @@ import { Task, Folder } from '../types';
 import { sortTasks } from '../utils/taskSorting';
 
 const DOUBLE_CLICK_DELAY = 300; // milliseconds
+// Starred section heights: section (300px) = header + border + padding + tasks container (250px)
 const STARRED_SECTION_MAX_HEIGHT = 300; // pixels
 const STARRED_TASKS_MAX_HEIGHT = 250; // pixels
 

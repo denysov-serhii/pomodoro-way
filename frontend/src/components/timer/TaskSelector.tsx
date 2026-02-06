@@ -63,14 +63,14 @@ const TaskSelector: React.FC = () => {
 
   // Auto-expand the folder containing the current task when modal opens
   React.useEffect(() => {
-    if (showTaskSelector && currentTask && expandedFolderId === null) {
+    if (showTaskSelector && currentTask) {
       const currentTaskFolderId = currentTask.folderId || 'no-folder';
       setExpandedFolderId(currentTaskFolderId);
     } else if (!showTaskSelector) {
       // Reset expansion when modal closes
       setExpandedFolderId(null);
     }
-  }, [showTaskSelector, currentTask, expandedFolderId]);
+  }, [showTaskSelector, currentTask]);
 
   return (
     <View>
