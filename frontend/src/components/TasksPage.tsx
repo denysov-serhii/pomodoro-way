@@ -25,7 +25,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToTimer }) => {
       case 'tasks':
         return <TaskList onAddTask={() => setShowAddTaskModal(true)} onNavigateToTimer={onNavigateToTimer} />;
       case 'projects':
-        return <ProjectsManager />;
+        return <ProjectsManager onNavigateToTimer={onNavigateToTimer} />;
       case 'tags':
         return <TagsManager />;
       default:

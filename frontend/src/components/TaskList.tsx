@@ -50,6 +50,7 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
       <FolderDetailPage
         folderId={selectedFolderId}
         onBack={() => setSelectedFolderId(null)}
+        onNavigateToTimer={onNavigateToTimer}
       />
     );
   }
@@ -134,8 +135,8 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
   // Get starred tasks from all folders (not completed)
   const starredTasks = sortTasks(tasks.filter(task => task.isStarred && !task.isCompleted));
 
-  // Get tasks that are not in any folder and not completed
-  const tasksWithoutFolder = sortTasks(tasks.filter(task => !task.folderId && !task.isCompleted));
+  // Get tasks that are not in any folder and not completed, excluding starred tasks (they're shown in starred section)
+  const tasksWithoutFolder = sortTasks(tasks.filter(task => !task.folderId && !task.isCompleted && !task.isStarred));
 
   // Create combined list: folders first, then tasks without folders
   const listItems: ListItem[] = [
@@ -672,8 +673,8 @@ const styles = StyleSheet.create({
     borderColor: '#f39c12',
     borderRadius: 10,
     padding: 10,
-    margin: 10,
-    marginBottom: 5,
+    marginHorizontal: 10,
+    marginBottom: 10,
   },
   starredHeader: {
     flexDirection: 'row',
