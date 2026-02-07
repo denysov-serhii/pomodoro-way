@@ -70,7 +70,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       throw new Error('Cannot delete task with tracked time. Please complete/archive the task instead.');
     }
     
-    const updatedTasks = tasks.filter(task => task.id !== taskId);
+    // Soft delete: mark task as deleted instead of removing it
+    const updatedTasks = tasks.map(t => 
+      t.id === taskId ? { ...t, deletedAt: new Date().toISOString() } : t
+    ).filter(t => !t.deletedAt); // Remove from local state
+    
     setTasks(updatedTasks);
     await saveTasks(updatedTasks);
     if (currentTask?.id === taskId) {
@@ -109,7 +113,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   const deleteProject = async (projectId: string) => {
-    const updatedProjects = projects.filter(project => project.id !== projectId);
+    // Soft delete: mark project as deleted instead of removing it
+    const updatedProjects = projects.map(p =>
+      p.id === projectId ? { ...p, deletedAt: new Date().toISOString() } : p
+    ).filter(p => !p.deletedAt); // Remove from local state
+    
     setProjects(updatedProjects);
     await saveProjects(updatedProjects);
   };
@@ -133,7 +141,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     setTasks(updatedTasks);
     await saveTasks(updatedTasks);
     
-    const updatedFolders = folders.filter(folder => folder.id !== folderId);
+    // Soft delete: mark folder as deleted instead of removing it
+    const updatedFolders = folders.map(f =>
+      f.id === folderId ? { ...f, deletedAt: new Date().toISOString() } : f
+    ).filter(f => !f.deletedAt); // Remove from local state
+    
     setFolders(updatedFolders);
     await saveFolders(updatedFolders);
   };
@@ -150,7 +162,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   const deleteTag = async (tagId: string) => {
-    const updatedTags = tags.filter(tag => tag.id !== tagId);
+    // Soft delete: mark tag as deleted instead of removing it
+    const updatedTags = tags.map(t =>
+      t.id === tagId ? { ...t, deletedAt: new Date().toISOString() } : t
+    ).filter(t => !t.deletedAt); // Remove from local state
+    
     setTags(updatedTags);
     await saveTags(updatedTags);
   };

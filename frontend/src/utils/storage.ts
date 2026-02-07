@@ -22,6 +22,27 @@ const STORAGE_KEYS = {
 export const saveTasks = async (tasks: Task[]): Promise<void> => {
   try {
     const batch = writeBatch(db);
+    const tasksCollection = collection(db, COLLECTIONS.TASKS);
+    
+    // Get existing task IDs
+    const snapshot = await getDocs(tasksCollection);
+    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
+    const newIds = new Set(tasks.map(task => task.id));
+    
+    // Mark tasks as deleted that no longer exist (soft delete for sync)
+    existingIds.forEach(id => {
+      if (!newIds.has(id)) {
+        const existingDoc = snapshot.docs.find(d => d.id === id);
+        const existingTask = existingDoc?.data() as Task;
+        // Only mark as deleted if not already deleted
+        if (existingTask && !existingTask.deletedAt) {
+          batch.set(doc(db, COLLECTIONS.TASKS, id), {
+            ...existingTask,
+            deletedAt: new Date().toISOString(),
+          });
+        }
+      }
+    });
     
     // Update or create tasks
     tasks.forEach(task => {
@@ -39,7 +60,10 @@ export const loadTasks = async (): Promise<Task[]> => {
     const tasksCollection = collection(db, COLLECTIONS.TASKS);
     const q = query(tasksCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => doc.data() as Task);
+    // Filter out deleted tasks
+    return snapshot.docs
+      .map(doc => doc.data() as Task)
+      .filter(task => !task.deletedAt);
   } catch (error) {
     logError('Error loading tasks', 'storage.loadTasks', error);
     return [];
@@ -49,6 +73,27 @@ export const loadTasks = async (): Promise<Task[]> => {
 export const saveProjects = async (projects: Project[]): Promise<void> => {
   try {
     const batch = writeBatch(db);
+    const projectsCollection = collection(db, COLLECTIONS.PROJECTS);
+    
+    // Get existing project IDs
+    const snapshot = await getDocs(projectsCollection);
+    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
+    const newIds = new Set(projects.map(project => project.id));
+    
+    // Mark projects as deleted that no longer exist (soft delete for sync)
+    existingIds.forEach(id => {
+      if (!newIds.has(id)) {
+        const existingDoc = snapshot.docs.find(d => d.id === id);
+        const existingProject = existingDoc?.data() as Project;
+        // Only mark as deleted if not already deleted
+        if (existingProject && !existingProject.deletedAt) {
+          batch.set(doc(db, COLLECTIONS.PROJECTS, id), {
+            ...existingProject,
+            deletedAt: new Date().toISOString(),
+          });
+        }
+      }
+    });
     
     // Update or create projects
     projects.forEach(project => {
@@ -66,7 +111,10 @@ export const loadProjects = async (): Promise<Project[]> => {
     const projectsCollection = collection(db, COLLECTIONS.PROJECTS);
     const q = query(projectsCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => doc.data() as Project);
+    // Filter out deleted projects
+    return snapshot.docs
+      .map(doc => doc.data() as Project)
+      .filter(project => !project.deletedAt);
   } catch (error) {
     logError('Error loading projects', 'storage.loadProjects', error);
     return [];
@@ -76,6 +124,27 @@ export const loadProjects = async (): Promise<Project[]> => {
 export const saveTags = async (tags: Tag[]): Promise<void> => {
   try {
     const batch = writeBatch(db);
+    const tagsCollection = collection(db, COLLECTIONS.TAGS);
+    
+    // Get existing tag IDs
+    const snapshot = await getDocs(tagsCollection);
+    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
+    const newIds = new Set(tags.map(tag => tag.id));
+    
+    // Mark tags as deleted that no longer exist (soft delete for sync)
+    existingIds.forEach(id => {
+      if (!newIds.has(id)) {
+        const existingDoc = snapshot.docs.find(d => d.id === id);
+        const existingTag = existingDoc?.data() as Tag;
+        // Only mark as deleted if not already deleted
+        if (existingTag && !existingTag.deletedAt) {
+          batch.set(doc(db, COLLECTIONS.TAGS, id), {
+            ...existingTag,
+            deletedAt: new Date().toISOString(),
+          });
+        }
+      }
+    });
     
     // Update or create tags
     tags.forEach(tag => {
@@ -93,7 +162,10 @@ export const loadTags = async (): Promise<Tag[]> => {
     const tagsCollection = collection(db, COLLECTIONS.TAGS);
     const q = query(tagsCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => doc.data() as Tag);
+    // Filter out deleted tags
+    return snapshot.docs
+      .map(doc => doc.data() as Tag)
+      .filter(tag => !tag.deletedAt);
   } catch (error) {
     logError('Error loading tags', 'storage.loadTags', error);
     return [];
@@ -103,6 +175,27 @@ export const loadTags = async (): Promise<Tag[]> => {
 export const saveFolders = async (folders: Folder[]): Promise<void> => {
   try {
     const batch = writeBatch(db);
+    const foldersCollection = collection(db, COLLECTIONS.FOLDERS);
+    
+    // Get existing folder IDs
+    const snapshot = await getDocs(foldersCollection);
+    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
+    const newIds = new Set(folders.map(folder => folder.id));
+    
+    // Mark folders as deleted that no longer exist (soft delete for sync)
+    existingIds.forEach(id => {
+      if (!newIds.has(id)) {
+        const existingDoc = snapshot.docs.find(d => d.id === id);
+        const existingFolder = existingDoc?.data() as Folder;
+        // Only mark as deleted if not already deleted
+        if (existingFolder && !existingFolder.deletedAt) {
+          batch.set(doc(db, COLLECTIONS.FOLDERS, id), {
+            ...existingFolder,
+            deletedAt: new Date().toISOString(),
+          });
+        }
+      }
+    });
     
     // Update or create folders
     folders.forEach(folder => {
@@ -120,7 +213,10 @@ export const loadFolders = async (): Promise<Folder[]> => {
     const foldersCollection = collection(db, COLLECTIONS.FOLDERS);
     const q = query(foldersCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => doc.data() as Folder);
+    // Filter out deleted folders
+    return snapshot.docs
+      .map(doc => doc.data() as Folder)
+      .filter(folder => !folder.deletedAt);
   } catch (error) {
     logError('Error loading folders', 'storage.loadFolders', error);
     return [];

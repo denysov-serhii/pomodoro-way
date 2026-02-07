@@ -11,6 +11,7 @@ export interface Task {
   isCompleted?: boolean; // Whether the task is completed/archived
   isStarred?: boolean; // Whether the task is starred (pinned to top)
   completedAt?: string; // When the task was completed
+  deletedAt?: string; // When the task was deleted (soft delete for sync)
 }
 
 export interface PomodoroSession {
@@ -25,18 +26,21 @@ export interface Project {
   id: string;
   name: string;
   createdAt: string;
+  deletedAt?: string; // When the project was deleted (soft delete for sync)
 }
 
 export interface Folder {
   id: string;
   name: string;
   createdAt: string;
+  deletedAt?: string; // When the folder was deleted (soft delete for sync)
 }
 
 export interface Tag {
   id: string;
   name: string;
   createdAt: string;
+  deletedAt?: string; // When the tag was deleted (soft delete for sync)
 }
 
 export interface TimerState {
