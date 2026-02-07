@@ -22,19 +22,6 @@ const STORAGE_KEYS = {
 export const saveTasks = async (tasks: Task[]): Promise<void> => {
   try {
     const batch = writeBatch(db);
-    const tasksCollection = collection(db, COLLECTIONS.TASKS);
-    
-    // Get existing task IDs
-    const snapshot = await getDocs(tasksCollection);
-    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
-    const newIds = new Set(tasks.map(task => task.id));
-    
-    // Delete tasks that no longer exist
-    existingIds.forEach(id => {
-      if (!newIds.has(id)) {
-        batch.delete(doc(db, COLLECTIONS.TASKS, id));
-      }
-    });
     
     // Update or create tasks
     tasks.forEach(task => {
@@ -62,19 +49,6 @@ export const loadTasks = async (): Promise<Task[]> => {
 export const saveProjects = async (projects: Project[]): Promise<void> => {
   try {
     const batch = writeBatch(db);
-    const projectsCollection = collection(db, COLLECTIONS.PROJECTS);
-    
-    // Get existing project IDs
-    const snapshot = await getDocs(projectsCollection);
-    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
-    const newIds = new Set(projects.map(project => project.id));
-    
-    // Delete projects that no longer exist
-    existingIds.forEach(id => {
-      if (!newIds.has(id)) {
-        batch.delete(doc(db, COLLECTIONS.PROJECTS, id));
-      }
-    });
     
     // Update or create projects
     projects.forEach(project => {
@@ -102,19 +76,6 @@ export const loadProjects = async (): Promise<Project[]> => {
 export const saveTags = async (tags: Tag[]): Promise<void> => {
   try {
     const batch = writeBatch(db);
-    const tagsCollection = collection(db, COLLECTIONS.TAGS);
-    
-    // Get existing tag IDs
-    const snapshot = await getDocs(tagsCollection);
-    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
-    const newIds = new Set(tags.map(tag => tag.id));
-    
-    // Delete tags that no longer exist
-    existingIds.forEach(id => {
-      if (!newIds.has(id)) {
-        batch.delete(doc(db, COLLECTIONS.TAGS, id));
-      }
-    });
     
     // Update or create tags
     tags.forEach(tag => {
@@ -142,19 +103,6 @@ export const loadTags = async (): Promise<Tag[]> => {
 export const saveFolders = async (folders: Folder[]): Promise<void> => {
   try {
     const batch = writeBatch(db);
-    const foldersCollection = collection(db, COLLECTIONS.FOLDERS);
-    
-    // Get existing folder IDs
-    const snapshot = await getDocs(foldersCollection);
-    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
-    const newIds = new Set(folders.map(folder => folder.id));
-    
-    // Delete folders that no longer exist
-    existingIds.forEach(id => {
-      if (!newIds.has(id)) {
-        batch.delete(doc(db, COLLECTIONS.FOLDERS, id));
-      }
-    });
     
     // Update or create folders
     folders.forEach(folder => {
@@ -230,19 +178,6 @@ export const loadSettings = async (): Promise<Settings | null> => {
 export const savePomodoroSessions = async (sessions: PomodoroSession[]): Promise<void> => {
   try {
     const batch = writeBatch(db);
-    const sessionsCollection = collection(db, COLLECTIONS.POMODORO_SESSIONS);
-    
-    // Get existing session IDs
-    const snapshot = await getDocs(sessionsCollection);
-    const existingIds = new Set(snapshot.docs.map(doc => doc.id));
-    const newIds = new Set(sessions.map(session => session.id));
-    
-    // Delete sessions that no longer exist
-    existingIds.forEach(id => {
-      if (!newIds.has(id)) {
-        batch.delete(doc(db, COLLECTIONS.POMODORO_SESSIONS, id));
-      }
-    });
     
     // Update or create sessions
     sessions.forEach(session => {
