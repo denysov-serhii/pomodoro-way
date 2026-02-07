@@ -14,7 +14,7 @@ import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import { Project } from '../types';
 import ProjectDetailPage from './ProjectDetailPage';
 
-const ProjectsManager: React.FC = () => {
+const ProjectsManager: React.FC<{ onNavigateToTimer?: () => void }> = ({ onNavigateToTimer }) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('ProjectsManager must be used within AppProvider');
@@ -96,6 +96,7 @@ const ProjectsManager: React.FC = () => {
         <ProjectDetailPage 
           projectId={selectedProjectId} 
           onBack={() => setSelectedProjectId(null)} 
+          onNavigateToTimer={onNavigateToTimer}
         />
       ) : (
         <View style={styles.container}>

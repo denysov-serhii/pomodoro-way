@@ -16,12 +16,15 @@ import EditTaskModal from './EditTaskModal';
 import { Task } from '../types';
 import { sortTasks } from '../utils/taskSorting';
 
+const DOUBLE_CLICK_DELAY = 300; // milliseconds
+
 interface FolderDetailPageProps {
   folderId: string;
   onBack: () => void;
+  onNavigateToTimer?: () => void;
 }
 
-const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack }) => {
+const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack, onNavigateToTimer }) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('FolderDetailPage must be used within AppProvider');
@@ -31,6 +34,8 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
   const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [lastTapTime, setLastTapTime] = useState<number>(0);
+  const [lastTappedTaskId, setLastTappedTaskId] = useState<string | null>(null);
 
   const folder = folders.find(f => f.id === folderId);
   const folderTasks = sortTasks(tasks.filter(task => task.folderId === folderId && !task.isCompleted));
@@ -94,10 +99,29 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack })
       <TouchableOpacity
         style={[styles.taskItem, isSelected && styles.taskItemSelected, isExpanded && styles.taskItemExpanded]}
         onPress={() => {
-          if (!isExpanded) {
+          const now = Date.now();
+          
+          // Check for double-click
+          if (lastTappedTaskId === item.id && now - lastTapTime < DOUBLE_CLICK_DELAY) {
+            // Double-click detected - navigate to timer
             setCurrentTask(item);
+            if (onNavigateToTimer) {
+              onNavigateToTimer();
+            }
+            setLastTapTime(0);
+            setLastTappedTaskId(null);
+          } else {
+            // Single click - update tracking and expand/collapse
+            setLastTapTime(now);
+            setLastTappedTaskId(item.id);
+            
+            // Always set current task on single click
+            setCurrentTask(item);
+            
+            // Toggle expansion
+            const willBeExpanded = !isExpanded;
+            setExpandedTaskId(willBeExpanded ? item.id : null);
           }
-          setExpandedTaskId(isExpanded ? null : item.id);
         }}
       >
         <View style={styles.taskContent}>
