@@ -29,10 +29,13 @@ export const saveTasks = async (tasks: Task[]): Promise<void> => {
     const existingIds = new Set(snapshot.docs.map(doc => doc.id));
     const newIds = new Set(tasks.map(task => task.id));
     
+    // Build a map for O(1) lookups
+    const docsById = new Map(snapshot.docs.map(d => [d.id, d]));
+    
     // Mark tasks as deleted that no longer exist (soft delete for sync)
     existingIds.forEach(id => {
       if (!newIds.has(id)) {
-        const existingDoc = snapshot.docs.find(d => d.id === id);
+        const existingDoc = docsById.get(id);
         const existingTask = existingDoc?.data() as Task;
         // Only mark as deleted if not already deleted
         if (existingTask && !existingTask.deletedAt) {
@@ -80,10 +83,13 @@ export const saveProjects = async (projects: Project[]): Promise<void> => {
     const existingIds = new Set(snapshot.docs.map(doc => doc.id));
     const newIds = new Set(projects.map(project => project.id));
     
+    // Build a map for O(1) lookups
+    const docsById = new Map(snapshot.docs.map(d => [d.id, d]));
+    
     // Mark projects as deleted that no longer exist (soft delete for sync)
     existingIds.forEach(id => {
       if (!newIds.has(id)) {
-        const existingDoc = snapshot.docs.find(d => d.id === id);
+        const existingDoc = docsById.get(id);
         const existingProject = existingDoc?.data() as Project;
         // Only mark as deleted if not already deleted
         if (existingProject && !existingProject.deletedAt) {
@@ -131,10 +137,13 @@ export const saveTags = async (tags: Tag[]): Promise<void> => {
     const existingIds = new Set(snapshot.docs.map(doc => doc.id));
     const newIds = new Set(tags.map(tag => tag.id));
     
+    // Build a map for O(1) lookups
+    const docsById = new Map(snapshot.docs.map(d => [d.id, d]));
+    
     // Mark tags as deleted that no longer exist (soft delete for sync)
     existingIds.forEach(id => {
       if (!newIds.has(id)) {
-        const existingDoc = snapshot.docs.find(d => d.id === id);
+        const existingDoc = docsById.get(id);
         const existingTag = existingDoc?.data() as Tag;
         // Only mark as deleted if not already deleted
         if (existingTag && !existingTag.deletedAt) {
@@ -182,10 +191,13 @@ export const saveFolders = async (folders: Folder[]): Promise<void> => {
     const existingIds = new Set(snapshot.docs.map(doc => doc.id));
     const newIds = new Set(folders.map(folder => folder.id));
     
+    // Build a map for O(1) lookups
+    const docsById = new Map(snapshot.docs.map(d => [d.id, d]));
+    
     // Mark folders as deleted that no longer exist (soft delete for sync)
     existingIds.forEach(id => {
       if (!newIds.has(id)) {
-        const existingDoc = snapshot.docs.find(d => d.id === id);
+        const existingDoc = docsById.get(id);
         const existingFolder = existingDoc?.data() as Folder;
         // Only mark as deleted if not already deleted
         if (existingFolder && !existingFolder.deletedAt) {
