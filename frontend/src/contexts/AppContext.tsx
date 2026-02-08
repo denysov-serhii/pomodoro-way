@@ -70,9 +70,16 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       throw new Error('Cannot delete task with tracked time. Please complete/archive the task instead.');
     }
     
-    const updatedTasks = tasks.filter(task => task.id !== taskId);
+    // Soft delete: mark task as deleted and save to Firestore
+    const tasksWithDeleted = tasks.map(t => 
+      t.id === taskId ? { ...t, deletedAt: new Date().toISOString() } : t
+    );
+    await saveTasks(tasksWithDeleted);
+    
+    // Remove from local state
+    const updatedTasks = tasksWithDeleted.filter(t => !t.deletedAt);
     setTasks(updatedTasks);
-    await saveTasks(updatedTasks);
+    
     if (currentTask?.id === taskId) {
       setCurrentTask(null);
     }
@@ -109,9 +116,15 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   const deleteProject = async (projectId: string) => {
-    const updatedProjects = projects.filter(project => project.id !== projectId);
+    // Soft delete: mark project as deleted and save to Firestore
+    const projectsWithDeleted = projects.map(p =>
+      p.id === projectId ? { ...p, deletedAt: new Date().toISOString() } : p
+    );
+    await saveProjects(projectsWithDeleted);
+    
+    // Remove from local state
+    const updatedProjects = projectsWithDeleted.filter(p => !p.deletedAt);
     setProjects(updatedProjects);
-    await saveProjects(updatedProjects);
   };
 
   const addFolder = async (folder: Omit<Folder, 'id' | 'createdAt'>) => {
@@ -133,9 +146,15 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     setTasks(updatedTasks);
     await saveTasks(updatedTasks);
     
-    const updatedFolders = folders.filter(folder => folder.id !== folderId);
+    // Soft delete: mark folder as deleted and save to Firestore
+    const foldersWithDeleted = folders.map(f =>
+      f.id === folderId ? { ...f, deletedAt: new Date().toISOString() } : f
+    );
+    await saveFolders(foldersWithDeleted);
+    
+    // Remove from local state
+    const updatedFolders = foldersWithDeleted.filter(f => !f.deletedAt);
     setFolders(updatedFolders);
-    await saveFolders(updatedFolders);
   };
 
   const addTag = async (tag: Omit<Tag, 'id' | 'createdAt'>) => {
@@ -150,9 +169,15 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   const deleteTag = async (tagId: string) => {
-    const updatedTags = tags.filter(tag => tag.id !== tagId);
+    // Soft delete: mark tag as deleted and save to Firestore
+    const tagsWithDeleted = tags.map(t =>
+      t.id === tagId ? { ...t, deletedAt: new Date().toISOString() } : t
+    );
+    await saveTags(tagsWithDeleted);
+    
+    // Remove from local state
+    const updatedTags = tagsWithDeleted.filter(t => !t.deletedAt);
     setTags(updatedTags);
-    await saveTags(updatedTags);
   };
 
   const incrementTaskPomodoro = async (taskId: string, durationMinutes: number) => {
