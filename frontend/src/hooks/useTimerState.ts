@@ -35,6 +35,8 @@ export const useTimerState = () => {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [initialDuration, setInitialDuration] = useState<number>(25 * 60);
   const [sessionDuration, setSessionDuration] = useState<number>(25 * 60); // Track original session duration for task credit
+  const [pausedDuration, setPausedDuration] = useState<number>(0); // Track total accumulated pause time in seconds
+  const [pauseStartTime, setPauseStartTime] = useState<number | null>(null); // Track when pause started
   const [sessionType, setSessionType] = useState<'pomodoro' | 'shortBreak' | 'longBreak'>('pomodoro');
   const [completedPomodoros, setCompletedPomodoros] = useState<number>(0);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({ 
@@ -67,63 +69,87 @@ export const useTimerState = () => {
 
         hasLoadedState.current = true;
         const now = Date.now();
-        const elapsedMs = now - savedState.startTime;
-        const elapsedSeconds = Math.floor(elapsedMs / 1000);
-        const remainingTime = savedState.initialDuration - elapsedSeconds;
+        
+        if (savedState.isRunning) {
+          // Timer was running
+          const elapsedMs = now - savedState.startTime;
+          const elapsedSeconds = Math.floor(elapsedMs / 1000);
+          const remainingTime = savedState.initialDuration - elapsedSeconds;
 
-        if (savedState.isRunning && remainingTime > 0) {
-          // Timer was running, restore it
+          if (remainingTime > 0) {
+            // Timer was running, restore it
+            setSelectedDuration(Math.ceil(savedState.initialDuration / 60));
+            setInitialDuration(remainingTime); // For sync calculation from current point
+            setSessionDuration(savedState.sessionDuration || savedState.initialDuration); // Use saved sessionDuration or fall back to initialDuration
+            setPausedDuration(savedState.pausedDuration || 0); // Restore paused duration
+            setTimeLeft(remainingTime);
+            setIsRunning(true);
+            setStartTime(now); // Reset start time to now for accurate sync
+            setSessionType(savedState.sessionType || 'pomodoro');
+            setCompletedPomodoros(savedState.completedPomodoros || 0);
+            
+            // Find and set current task if it exists
+            let restoredTask = null;
+            if (savedState.taskId) {
+              restoredTask = tasks.find(t => t.id === savedState.taskId);
+              if (restoredTask) setCurrentTask(restoredTask);
+            }
+
+            // Schedule notification for remaining time
+            if (savedState.sessionType === 'pomodoro') {
+              schedulePomodoroCompleteNotification(remainingTime, restoredTask?.title).catch(error => {
+                logError('Failed to schedule notification on restore', 'useTimerState.loadSavedState', error);
+              });
+            } else {
+              const breakType = savedState.sessionType === 'longBreak' ? 'long' : 'short';
+              scheduleBreakCompleteNotification(remainingTime, breakType).catch(error => {
+                logError('Failed to schedule notification on restore', 'useTimerState.loadSavedState', error);
+              });
+            }
+          } else {
+            // Timer completed while away
+            setIsCompleted(true);
+            setTimeLeft(0);
+            setSessionType(savedState.sessionType || 'pomodoro');
+            setCompletedPomodoros(savedState.completedPomodoros || 0);
+            setSessionDuration(savedState.sessionDuration || savedState.initialDuration); // Use saved sessionDuration or fall back
+            setPausedDuration(savedState.pausedDuration || 0); // Restore paused duration
+            if (savedState.taskId) {
+              const task = tasks.find(t => t.id === savedState.taskId);
+              if (task) {
+                setCurrentTask(task);
+                if (savedState.sessionType === 'pomodoro') {
+                  // Use actual work time (session duration minus paused time)
+                  const actualWorkSeconds = (savedState.sessionDuration || savedState.initialDuration) - (savedState.pausedDuration || 0);
+                  const sessionMinutes = Math.round(actualWorkSeconds / 60);
+                  incrementTaskPomodoro(task.id, sessionMinutes);
+                }
+              }
+            }
+            setTimeout(() => {
+              const sessionName = savedState.sessionType === 'pomodoro' ? 'Pomodoro' : 'Break';
+              showAlert(`${sessionName} Complete!`, 'Your timer finished while you were away. Great work!');
+            }, 100);
+            await clearTimerState();
+          }
+        } else {
+          // Timer was paused, restore paused state
           setSelectedDuration(Math.ceil(savedState.initialDuration / 60));
-          setInitialDuration(remainingTime); // For sync calculation from current point
-          setSessionDuration(savedState.sessionDuration || savedState.initialDuration); // Use saved sessionDuration or fall back to initialDuration
-          setTimeLeft(remainingTime);
-          setIsRunning(true);
-          setStartTime(now); // Reset start time to now for accurate sync
+          setInitialDuration(savedState.initialDuration);
+          setSessionDuration(savedState.sessionDuration || savedState.initialDuration);
+          setPausedDuration(savedState.pausedDuration || 0);
+          setPauseStartTime(savedState.pauseStartTime || null);
+          setTimeLeft(savedState.initialDuration);
+          setIsRunning(false);
+          setStartTime(null);
           setSessionType(savedState.sessionType || 'pomodoro');
           setCompletedPomodoros(savedState.completedPomodoros || 0);
           
           // Find and set current task if it exists
-          let restoredTask = null;
           if (savedState.taskId) {
-            restoredTask = tasks.find(t => t.id === savedState.taskId);
+            const restoredTask = tasks.find(t => t.id === savedState.taskId);
             if (restoredTask) setCurrentTask(restoredTask);
           }
-
-          // Schedule notification for remaining time
-          if (savedState.sessionType === 'pomodoro') {
-            schedulePomodoroCompleteNotification(remainingTime, restoredTask?.title).catch(error => {
-              logError('Failed to schedule notification on restore', 'useTimerState.loadSavedState', error);
-            });
-          } else {
-            const breakType = savedState.sessionType === 'longBreak' ? 'long' : 'short';
-            scheduleBreakCompleteNotification(remainingTime, breakType).catch(error => {
-              logError('Failed to schedule notification on restore', 'useTimerState.loadSavedState', error);
-            });
-          }
-        } else if (savedState.isRunning && remainingTime <= 0) {
-          // Timer completed while away
-          setIsCompleted(true);
-          setTimeLeft(0);
-          setSessionType(savedState.sessionType || 'pomodoro');
-          setCompletedPomodoros(savedState.completedPomodoros || 0);
-          setSessionDuration(savedState.sessionDuration || savedState.initialDuration); // Use saved sessionDuration or fall back
-          if (savedState.taskId) {
-            const task = tasks.find(t => t.id === savedState.taskId);
-            if (task) {
-              setCurrentTask(task);
-              if (savedState.sessionType === 'pomodoro') {
-                const sessionMinutes = Math.round((savedState.sessionDuration || savedState.initialDuration) / 60);
-                incrementTaskPomodoro(task.id, sessionMinutes);
-              }
-            }
-          }
-          setTimeout(() => {
-            const sessionName = savedState.sessionType === 'pomodoro' ? 'Pomodoro' : 'Break';
-            showAlert(`${sessionName} Complete!`, 'Your timer finished while you were away. Great work!');
-          }, 100);
-          await clearTimerState();
-        } else {
-          await clearTimerState();
         }
       } else {
         hasLoadedState.current = true;
@@ -158,7 +184,9 @@ export const useTimerState = () => {
           if (sessionType === 'pomodoro') {
             // Pomodoro completed
             if (currentTask) {
-              const sessionMinutes = Math.round(sessionDuration / 60);
+              // Use actual work time (session duration minus paused time)
+              const actualWorkSeconds = sessionDuration - pausedDuration;
+              const sessionMinutes = Math.round(actualWorkSeconds / 60);
               incrementTaskPomodoro(currentTask.id, sessionMinutes);
             }
             const newCompletedPomodoros = completedPomodoros + 1;
@@ -181,6 +209,8 @@ export const useTimerState = () => {
             setTimeLeft(breakDuration * 60);
             setInitialDuration(breakDuration * 60);
             setSessionDuration(breakDuration * 60);
+            setPausedDuration(0); // Reset paused duration for new session
+            setPauseStartTime(null);
             setIsCompleted(false);
             setIsRunning(false); // Break is paused, user must start it
             setStartTime(null);
@@ -198,6 +228,8 @@ export const useTimerState = () => {
             setTimeLeft(25 * 60);
             setInitialDuration(25 * 60);
             setSessionDuration(25 * 60);
+            setPausedDuration(0); // Reset paused duration for new session
+            setPauseStartTime(null);
           }
           
           clearTimerState();
@@ -217,22 +249,28 @@ export const useTimerState = () => {
 
   // Save timer state whenever it changes
   useEffect(() => {
-    if (hasLoadedState.current && isRunning) {
-      const timerState = {
-        isRunning,
-        startTime: startTime || Date.now(),
-        initialDuration,
-        sessionDuration,
-        taskId: currentTask?.id || null,
-        sessionType,
-        completedPomodoros,
-      };
-      saveTimerState(timerState);
-      if (!startTime) {
-        setStartTime(Date.now());
+    if (hasLoadedState.current) {
+      // Save timer state for both running and paused timers (not just running)
+      // Only save if there's meaningful state (not a fresh timer)
+      if (isRunning || timeLeft !== selectedDuration * 60) {
+        const timerState = {
+          isRunning,
+          startTime: startTime || Date.now(),
+          initialDuration,
+          sessionDuration,
+          pausedDuration,
+          pauseStartTime: pauseStartTime ?? undefined,
+          taskId: currentTask?.id || null,
+          sessionType,
+          completedPomodoros,
+        };
+        saveTimerState(timerState);
+        if (isRunning && !startTime) {
+          setStartTime(Date.now());
+        }
       }
     }
-  }, [isRunning, currentTask, startTime, initialDuration, sessionDuration, sessionType, completedPomodoros]);
+  }, [isRunning, currentTask, startTime, initialDuration, sessionDuration, pausedDuration, pauseStartTime, sessionType, completedPomodoros, timeLeft, selectedDuration]);
 
   const showAlert = (title: string, message: string, onConfirm: (() => void) | null = null) => {
     if (onConfirm) {
@@ -260,6 +298,8 @@ export const useTimerState = () => {
       setTimeLeft(duration * 60);
       setInitialDuration(duration * 60);
       setSessionDuration(duration * 60);
+      setPausedDuration(0); // Reset paused duration for new session
+      setPauseStartTime(null);
       setIsCompleted(false);
       setStartTime(null);
     }
@@ -272,6 +312,8 @@ export const useTimerState = () => {
     setTimeLeft(25 * 60);
     setInitialDuration(25 * 60);
     setSessionDuration(25 * 60);
+    setPausedDuration(0); // Reset paused duration for new session
+    setPauseStartTime(null);
     setIsCompleted(false);
     setStartTime(null);
     clearTimerState();
@@ -290,6 +332,8 @@ export const useTimerState = () => {
     startTime,
     initialDuration,
     sessionDuration,
+    pausedDuration,
+    pauseStartTime,
     sessionType,
     completedPomodoros,
     confirmDialog,
@@ -299,6 +343,8 @@ export const useTimerState = () => {
     setStartTime,
     setInitialDuration,
     setSessionDuration,
+    setPausedDuration,
+    setPauseStartTime,
     setSessionType,
     setSelectedDuration,
     setCompletedPomodoros,
