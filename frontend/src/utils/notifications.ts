@@ -18,6 +18,8 @@ Notifications.setNotificationHandler({
 
 /**
  * Request notification permissions from the user
+ * Only requests permissions once when status is 'undetermined' (first time).
+ * Does not re-request if user has denied permissions to avoid repeated prompts.
  * @returns Promise<boolean> - true if permissions granted, false otherwise
  */
 export const requestNotificationPermissions = async (): Promise<boolean> => {
