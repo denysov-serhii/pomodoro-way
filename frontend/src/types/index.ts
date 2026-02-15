@@ -48,6 +48,8 @@ export interface TimerState {
   startTime: number;
   initialDuration: number;
   sessionDuration?: number; // Optional for backward compatibility
+  pausedDuration?: number; // Total accumulated pause time in seconds
+  pauseStartTime?: number; // Timestamp when pause started
   taskId: string | null;
   sessionType: 'pomodoro' | 'shortBreak' | 'longBreak';
   completedPomodoros: number;

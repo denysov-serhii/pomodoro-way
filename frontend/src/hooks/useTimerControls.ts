@@ -11,6 +11,8 @@ interface TimerState {
   isRunning: boolean;
   initialDuration: number;
   sessionDuration: number;
+  pausedDuration: number;
+  pauseStartTime: number | null;
   sessionType: 'pomodoro' | 'shortBreak' | 'longBreak';
   completedPomodoros: number;
   setIsRunning: (value: boolean) => void;
@@ -19,6 +21,8 @@ interface TimerState {
   setStartTime: (value: number | null) => void;
   setInitialDuration: (value: number) => void;
   setSessionDuration: (value: number) => void;
+  setPausedDuration: (value: number) => void;
+  setPauseStartTime: (value: number | null) => void;
   setSessionType: (value: 'pomodoro' | 'shortBreak' | 'longBreak') => void;
   setSelectedDuration: (value: number) => void;
   setCompletedPomodoros: (value: number) => void;
@@ -39,6 +43,8 @@ export const useTimerControls = (timerState: TimerState) => {
     timeLeft,
     isRunning,
     sessionDuration,
+    pausedDuration,
+    pauseStartTime,
     sessionType,
     completedPomodoros,
     setIsRunning,
@@ -47,6 +53,8 @@ export const useTimerControls = (timerState: TimerState) => {
     setStartTime,
     setInitialDuration,
     setSessionDuration,
+    setPausedDuration,
+    setPauseStartTime,
     setSessionType,
     setSelectedDuration,
     setCompletedPomodoros,
@@ -58,12 +66,21 @@ export const useTimerControls = (timerState: TimerState) => {
   const handleStart = () => {
     setIsRunning(true);
     setIsCompleted(false);
+    
+    // If resuming from pause, accumulate the paused time
+    if (pauseStartTime) {
+      const pauseDuration = Math.floor((Date.now() - pauseStartTime) / 1000);
+      setPausedDuration(pausedDuration + pauseDuration);
+      setPauseStartTime(null);
+    }
+    
     // Set startTime based on current timeLeft to handle resume after pause
     setStartTime(Date.now());
     setInitialDuration(timeLeft);
     // Set sessionDuration only on first start (not on resume)
     if (timeLeft === selectedDuration * 60) {
       setSessionDuration(timeLeft);
+      setPausedDuration(0); // Reset paused duration for new session
     }
 
     // Schedule notification for when session completes
@@ -82,6 +99,8 @@ export const useTimerControls = (timerState: TimerState) => {
 
   const handlePause = () => {
     setIsRunning(false);
+    // Track when pause started
+    setPauseStartTime(Date.now());
     // startTime will be recalculated on resume
     setStartTime(null);
     // Cancel any pending notification since timer is paused
@@ -95,6 +114,8 @@ export const useTimerControls = (timerState: TimerState) => {
     setTimeLeft(selectedDuration * 60);
     setInitialDuration(selectedDuration * 60);
     setSessionDuration(selectedDuration * 60);
+    setPausedDuration(0);
+    setPauseStartTime(null);
     setIsCompleted(false);
     setStartTime(null);
     clearTimerState();
@@ -106,7 +127,15 @@ export const useTimerControls = (timerState: TimerState) => {
       return;
     }
 
-    const timeSpentSeconds = sessionDuration - timeLeft;
+    // Calculate actual work time (excluding paused time)
+    let currentPausedDuration = pausedDuration;
+    if (pauseStartTime) {
+      // If currently paused, add current pause duration
+      const currentPauseDuration = Math.floor((Date.now() - pauseStartTime) / 1000);
+      currentPausedDuration += currentPauseDuration;
+    }
+    
+    const timeSpentSeconds = sessionDuration - timeLeft - currentPausedDuration;
     const timeSpentMinutes = Math.floor(timeSpentSeconds / 60);
     const timeSpentDisplay = timeSpentMinutes > 0 
       ? `${timeSpentMinutes} minute${timeSpentMinutes !== 1 ? 's' : ''}`
@@ -145,6 +174,8 @@ export const useTimerControls = (timerState: TimerState) => {
           setTimeLeft(breakDuration * 60);
           setInitialDuration(breakDuration * 60);
           setSessionDuration(breakDuration * 60);
+          setPausedDuration(0); // Reset paused duration for new session
+          setPauseStartTime(null);
           setIsCompleted(false);
           setIsRunning(false); // Break is paused, user must start it
           setStartTime(null);
