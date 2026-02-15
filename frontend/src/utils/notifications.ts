@@ -40,7 +40,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
       }
     }
     
-    // Permissions not granted (either denied or undetermined after request)
+    // Permissions not granted (either previously denied, or user just denied the request)
     console.warn('Notification permissions not granted');
     return false;
   }
