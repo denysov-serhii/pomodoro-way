@@ -23,19 +23,24 @@ Notifications.setNotificationHandler({
 export const requestNotificationPermissions = async (): Promise<boolean> => {
   if (Platform.OS === 'android') {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
     
-    if (existingStatus !== 'granted') {
+    // If already granted, return true
+    if (existingStatus === 'granted') {
+      return true;
+    }
+    
+    // Only request if we haven't asked yet (undetermined status)
+    // Don't re-request if user has denied permissions to avoid repeated prompts
+    if (existingStatus === 'undetermined') {
       const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+      if (status === 'granted') {
+        return true;
+      }
     }
     
-    if (finalStatus !== 'granted') {
-      console.warn('Notification permissions not granted');
-      return false;
-    }
-    
-    return true;
+    // Permissions not granted (either denied or undetermined after request)
+    console.warn('Notification permissions not granted');
+    return false;
   }
   
   // For non-Android platforms (iOS, web), return true as a no-op
