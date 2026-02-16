@@ -32,6 +32,7 @@ export interface Project {
 export interface Folder {
   id: string;
   name: string;
+  parentFolderId?: string | null; // For nested folders
   createdAt: string;
   deletedAt?: string; // When the folder was deleted (soft delete for sync)
 }
@@ -75,12 +76,25 @@ export interface Settings {
   longBreakDuration: number; // in minutes
 }
 
+export interface DailyPlanTask {
+  taskId: string;
+  plannedPomodoros: number;
+}
+
+export interface DailyPlan {
+  id: string;
+  date: string; // ISO date string (YYYY-MM-DD)
+  tasks: DailyPlanTask[]; // Max 5 tasks
+  createdAt: string;
+}
+
 export interface AppContextType {
   tasks: Task[];
   projects: Project[];
   folders: Folder[];
   tags: Tag[];
   pomodoroSessions: PomodoroSession[];
+  dailyPlans: DailyPlan[];
   currentTask: Task | null;
   settings: Settings;
   setCurrentTask: (task: Task | null) => void;
@@ -92,10 +106,14 @@ export interface AppContextType {
   addProject: (project: Omit<Project, 'id' | 'createdAt'>) => Promise<void>;
   deleteProject: (projectId: string) => Promise<void>;
   addFolder: (folder: Omit<Folder, 'id' | 'createdAt'>) => Promise<void>;
+  updateFolder: (folderId: string, updates: Partial<Folder>) => Promise<void>;
   deleteFolder: (folderId: string) => Promise<void>;
   addTag: (tag: Omit<Tag, 'id' | 'createdAt'>) => Promise<void>;
   deleteTag: (tagId: string) => Promise<void>;
   incrementTaskPomodoro: (taskId: string, durationMinutes: number) => Promise<void>;
   updateSettings: (settings: Settings) => Promise<void>;
+  addDailyPlan: (plan: Omit<DailyPlan, 'id' | 'createdAt'>) => Promise<void>;
+  updateDailyPlan: (planId: string, updates: Partial<DailyPlan>) => Promise<void>;
+  getTodayPlan: () => DailyPlan | null;
   reloadData: () => Promise<void>;
 }

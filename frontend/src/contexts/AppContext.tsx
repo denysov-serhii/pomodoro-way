@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { saveTasks, loadTasks, saveProjects, loadProjects, saveFolders, loadFolders, saveTags, loadTags, saveSettings, loadSettings, savePomodoroSessions, loadPomodoroSessions } from '../utils/storage';
-import { Task, Project, Folder, Tag, AppContextType, Settings, PomodoroSession } from '../types';
+import { saveTasks, loadTasks, saveProjects, loadProjects, saveFolders, loadFolders, saveTags, loadTags, saveSettings, loadSettings, savePomodoroSessions, loadPomodoroSessions, saveDailyPlans, loadDailyPlans } from '../utils/storage';
+import { Task, Project, Folder, Tag, AppContextType, Settings, PomodoroSession, DailyPlan } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -14,6 +14,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [pomodoroSessions, setPomodoroSessions] = useState<PomodoroSession[]>([]);
+  const [dailyPlans, setDailyPlans] = useState<DailyPlan[]>([]);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
   const [settings, setSettings] = useState<Settings>({
     shortBreakDuration: 5,
@@ -31,12 +32,14 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     const loadedFolders = await loadFolders();
     const loadedTags = await loadTags();
     const loadedSessions = await loadPomodoroSessions();
+    const loadedPlans = await loadDailyPlans();
     const loadedSettings = await loadSettings();
     setTasks(loadedTasks);
     setProjects(loadedProjects);
     setFolders(loadedFolders);
     setTags(loadedTags);
     setPomodoroSessions(loadedSessions);
+    setDailyPlans(loadedPlans);
     if (loadedSettings) {
       setSettings(loadedSettings);
     }
@@ -138,23 +141,38 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     await saveFolders(updatedFolders);
   };
 
+  const updateFolder = async (folderId: string, updates: Partial<Folder>) => {
+    const updatedFolders = folders.map(folder =>
+      folder.id === folderId ? { ...folder, ...updates } : folder
+    );
+    setFolders(updatedFolders);
+    await saveFolders(updatedFolders);
+  };
+
   const deleteFolder = async (folderId: string) => {
-    // Remove folderId from tasks before deleting the folder
+    // Remove folderId from tasks and child folders before deleting the folder
     const updatedTasks = tasks.map(task =>
       task.folderId === folderId ? { ...task, folderId: null } : task
     );
     setTasks(updatedTasks);
     await saveTasks(updatedTasks);
     
+    // Move child folders to the parent of the deleted folder
+    const folderToDelete = folders.find(f => f.id === folderId);
+    const parentFolderId = folderToDelete?.parentFolderId || null;
+    const updatedFolders = folders.map(f =>
+      f.parentFolderId === folderId ? { ...f, parentFolderId } : f
+    );
+    
     // Soft delete: mark folder as deleted and save to Firestore
-    const foldersWithDeleted = folders.map(f =>
+    const foldersWithDeleted = updatedFolders.map(f =>
       f.id === folderId ? { ...f, deletedAt: new Date().toISOString() } : f
     );
     await saveFolders(foldersWithDeleted);
     
     // Remove from local state
-    const updatedFolders = foldersWithDeleted.filter(f => !f.deletedAt);
-    setFolders(updatedFolders);
+    const finalFolders = foldersWithDeleted.filter(f => !f.deletedAt);
+    setFolders(finalFolders);
   };
 
   const addTag = async (tag: Omit<Tag, 'id' | 'createdAt'>) => {
@@ -214,6 +232,30 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     await saveSettings(newSettings);
   };
 
+  const addDailyPlan = async (plan: Omit<DailyPlan, 'id' | 'createdAt'>) => {
+    const newPlan: DailyPlan = {
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
+      ...plan,
+      createdAt: new Date().toISOString(),
+    };
+    const updatedPlans = [...dailyPlans, newPlan];
+    setDailyPlans(updatedPlans);
+    await saveDailyPlans(updatedPlans);
+  };
+
+  const updateDailyPlan = async (planId: string, updates: Partial<DailyPlan>) => {
+    const updatedPlans = dailyPlans.map(plan =>
+      plan.id === planId ? { ...plan, ...updates } : plan
+    );
+    setDailyPlans(updatedPlans);
+    await saveDailyPlans(updatedPlans);
+  };
+
+  const getTodayPlan = (): DailyPlan | null => {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    return dailyPlans.find(plan => plan.date === today) || null;
+  };
+
   const reloadData = async () => {
     await loadData();
   };
@@ -226,6 +268,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         folders,
         tags,
         pomodoroSessions,
+        dailyPlans,
         currentTask,
         settings,
         setCurrentTask,
@@ -237,11 +280,15 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         addProject,
         deleteProject,
         addFolder,
+        updateFolder,
         deleteFolder,
         addTag,
         deleteTag,
         incrementTaskPomodoro,
         updateSettings,
+        addDailyPlan,
+        updateDailyPlan,
+        getTodayPlan,
         reloadData,
       }}
     >

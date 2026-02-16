@@ -22,6 +22,7 @@ const FoldersManager: React.FC = () => {
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [isAdding, setIsAdding] = useState<boolean>(false);
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
 
   const handleAddFolder = () => {
     if (!newFolderName.trim()) {
@@ -33,39 +34,89 @@ const FoldersManager: React.FC = () => {
       return;
     }
 
-    addFolder({ name: newFolderName.trim() });
+    addFolder({ 
+      name: newFolderName.trim(),
+      parentFolderId: selectedParentId,
+    });
     setNewFolderName('');
     setIsAdding(false);
+    setSelectedParentId(null);
   };
 
   const handleDeleteFolder = (folderId: string, folderName: string) => {
     showDialog({
       title: 'Delete Folder',
-      message: `Are you sure you want to delete "${folderName}"? Tasks in this folder will be moved to no folder.`,
+      message: `Are you sure you want to delete "${folderName}"? Tasks in this folder will be moved to no folder. Child folders will be moved to the parent folder.`,
       confirmText: 'Delete',
       onConfirm: () => deleteFolder(folderId),
     });
   };
 
-  const getFolderTaskCount = (folderId: string): number => {
-    return tasks.filter((task) => task.folderId === folderId).length;
+  const handleAddSubFolder = (parentId: string) => {
+    setSelectedParentId(parentId);
+    setIsAdding(true);
   };
 
-  const renderFolder = ({ item }: { item: Folder }) => {
-    const taskCount = getFolderTaskCount(item.id);
+  const getFolderTaskCount = (folderId: string, recursive: boolean = false): number => {
+    let count = tasks.filter((task) => task.folderId === folderId).length;
+    
+    if (recursive) {
+      const childFolders = folders.filter(f => f.parentFolderId === folderId);
+      childFolders.forEach(childFolder => {
+        count += getFolderTaskCount(childFolder.id, true);
+      });
+    }
+    
+    return count;
+  };
+
+  // Build hierarchy of folders
+  const buildFolderHierarchy = (): (Folder & { level: number })[] => {
+    const rootFolders = folders.filter(f => !f.parentFolderId);
+    
+    const buildTree = (parentId: string | null, level: number = 0): (Folder & { level: number })[] => {
+      const childFolders = folders.filter(f => f.parentFolderId === parentId);
+      return childFolders.flatMap(folder => [
+        { ...folder, level },
+        ...buildTree(folder.id, level + 1)
+      ]);
+    };
+    
+    return rootFolders.flatMap(folder => [
+      { ...folder, level: 0 },
+      ...buildTree(folder.id, 1)
+    ]);
+  };
+
+  const hierarchicalFolders = buildFolderHierarchy();
+
+  const renderFolder = ({ item }: { item: Folder & { level: number } }) => {
+    const taskCount = getFolderTaskCount(item.id, false);
+    const totalTaskCount = getFolderTaskCount(item.id, true);
+    const indentWidth = item.level * 20;
 
     return (
-      <View style={styles.folderItem}>
+      <View style={[styles.folderItem, { marginLeft: indentWidth }]}>
         <View style={styles.folderContent}>
           <MaterialIcons name="folder" size={24} color="#f39c12" />
           <View style={styles.folderInfo}>
             <Text style={styles.folderName}>{item.name}</Text>
-            <Text style={styles.folderTaskCount}>{taskCount} task(s)</Text>
+            <Text style={styles.folderTaskCount}>
+              {taskCount} task(s){totalTaskCount > taskCount ? ` (${totalTaskCount} total)` : ''}
+            </Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => handleDeleteFolder(item.id, item.name)}>
-          <MaterialIcons name="delete" size={24} color="#e74c3c" />
-        </TouchableOpacity>
+        <View style={styles.folderActions}>
+          <TouchableOpacity 
+            onPress={() => handleAddSubFolder(item.id)}
+            style={styles.actionButton}
+          >
+            <MaterialIcons name="create-new-folder" size={22} color="#3498db" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDeleteFolder(item.id, item.name)}>
+            <MaterialIcons name="delete" size={24} color="#e74c3c" />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -88,12 +139,24 @@ const FoldersManager: React.FC = () => {
             style={styles.input}
             value={newFolderName}
             onChangeText={setNewFolderName}
-            placeholder="Folder name"
+            placeholder={selectedParentId ? "Sub-folder name" : "Folder name"}
             placeholderTextColor="#95a5a6"
           />
           <TouchableOpacity style={styles.saveButton} onPress={handleAddFolder}>
             <Text style={styles.saveButtonText}>Add</Text>
           </TouchableOpacity>
+          {selectedParentId && (
+            <TouchableOpacity 
+              style={styles.cancelButton} 
+              onPress={() => {
+                setIsAdding(false);
+                setSelectedParentId(null);
+                setNewFolderName('');
+              }}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -105,7 +168,7 @@ const FoldersManager: React.FC = () => {
         </View>
       ) : (
         <FlatList
-          data={folders}
+          data={hierarchicalFolders}
           renderItem={renderFolder}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
@@ -180,6 +243,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  cancelButton: {
+    backgroundColor: '#95a5a6',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    marginLeft: 10,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   listContainer: {
     padding: 15,
   },
@@ -198,6 +274,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+  },
+  folderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  actionButton: {
+    padding: 4,
   },
   folderInfo: {
     marginLeft: 12,
