@@ -50,19 +50,24 @@ export default function App() {
     setupNotifications();
   }, []);
 
+  // Render all tabs but only show the active one to prevent unmounting
   const renderContent = () => {
-    switch (activeTab) {
-      case 'timer':
-        return <PomodoroTimer />;
-      case 'tasks':
-        return <TasksPage onNavigateToTimer={() => setActiveTab('timer')} />;
-      case 'stats':
-        return <Statistics />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <PomodoroTimer />;
-    }
+    return (
+      <>
+        <View style={{ display: activeTab === 'timer' ? 'flex' : 'none', flex: 1 }}>
+          <PomodoroTimer />
+        </View>
+        <View style={{ display: activeTab === 'tasks' ? 'flex' : 'none', flex: 1 }}>
+          <TasksPage onNavigateToTimer={() => setActiveTab('timer')} />
+        </View>
+        <View style={{ display: activeTab === 'stats' ? 'flex' : 'none', flex: 1 }}>
+          <Statistics />
+        </View>
+        <View style={{ display: activeTab === 'settings' ? 'flex' : 'none', flex: 1 }}>
+          <Settings />
+        </View>
+      </>
+    );
   };
 
   return (
