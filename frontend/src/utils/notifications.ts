@@ -244,7 +244,7 @@ export const showOngoingTimerNotification = async (
       return;
     }
 
-    const sessionEmoji = sessionType === 'pomodoro' ? '🍅' : '⏸️';
+    const sessionEmoji = sessionType === 'pomodoro' ? '🍅' : '☕';
     const sessionName = sessionType === 'pomodoro' 
       ? 'Pomodoro' 
       : sessionType === 'longBreak' 
@@ -267,7 +267,7 @@ export const showOngoingTimerNotification = async (
         body,
         sound: false, // No sound for ongoing updates
         priority: Notifications.AndroidNotificationPriority.DEFAULT,
-        sticky: true, // Make notification persistent (non-dismissible by user swipe)
+        sticky: true, // Keeps notification in ongoing section
         autoDismiss: false,
         categoryIdentifier: 'timer',
       },
