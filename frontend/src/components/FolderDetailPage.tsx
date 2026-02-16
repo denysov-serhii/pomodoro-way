@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   GestureResponderEvent,
+  TextInput,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppContext } from '../contexts/AppContext';
@@ -13,10 +14,14 @@ import ConfirmDialog from './common/ConfirmDialog';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import AddTaskModal from './AddTaskModal';
 import EditTaskModal from './EditTaskModal';
-import { Task } from '../types';
+import { Task, Folder } from '../types';
 import { sortTasks } from '../utils/taskSorting';
 
 const DOUBLE_CLICK_DELAY = 300; // milliseconds
+
+type ListItem = 
+  | { type: 'subfolder'; data: Folder }
+  | { type: 'task'; data: Task };
 
 interface FolderDetailPageProps {
   folderId: string;
@@ -29,16 +34,31 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack, o
   if (!context) {
     throw new Error('FolderDetailPage must be used within AppProvider');
   }
-  const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask, completeTask, toggleStarTask } = context;
+  const { tasks, projects, folders, tags, currentTask, setCurrentTask, deleteTask, completeTask, toggleStarTask, addFolder, deleteFolder } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [showAddTaskModal, setShowAddTaskModal] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [lastTapTime, setLastTapTime] = useState<number>(0);
   const [lastTappedTaskId, setLastTappedTaskId] = useState<string | null>(null);
+  const [isAddingSubfolder, setIsAddingSubfolder] = useState<boolean>(false);
+  const [newSubfolderName, setNewSubfolderName] = useState<string>('');
+  const [selectedSubfolderId, setSelectedSubfolderId] = useState<string | null>(null);
+
+  // If a subfolder is selected, show its detail page recursively
+  if (selectedSubfolderId) {
+    return (
+      <FolderDetailPage
+        folderId={selectedSubfolderId}
+        onBack={() => setSelectedSubfolderId(null)}
+        onNavigateToTimer={onNavigateToTimer}
+      />
+    );
+  }
 
   const folder = folders.find(f => f.id === folderId);
   const folderTasks = sortTasks(tasks.filter(task => task.folderId === folderId && !task.isCompleted));
+  const subfolders = folders.filter(f => f.parentFolderId === folderId);
 
   const getProjectName = (projectId?: string | null): string | null => {
     if (!projectId) return null;
@@ -87,6 +107,86 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack, o
 
   const handleToggleStar = (taskId: string) => {
     toggleStarTask(taskId);
+  };
+
+  const handleAddSubfolder = () => {
+    if (!newSubfolderName.trim()) {
+      showDialog({
+        title: 'Error',
+        message: 'Please enter a subfolder name',
+        showCancel: false,
+      });
+      return;
+    }
+
+    addFolder({ 
+      name: newSubfolderName.trim(),
+      parentFolderId: folderId,
+    });
+    setNewSubfolderName('');
+    setIsAddingSubfolder(false);
+  };
+
+  const handleDeleteSubfolder = (subfolderId: string, subfolderName: string) => {
+    showDialog({
+      title: 'Delete Subfolder',
+      message: `Are you sure you want to delete "${subfolderName}"? Tasks in this folder will be moved to no folder. Child folders will be moved to the parent folder.`,
+      confirmText: 'Delete',
+      onConfirm: () => deleteFolder(subfolderId),
+    });
+  };
+
+  const getSubfolderTaskCount = (subfolderId: string, recursive: boolean = false): number => {
+    let count = tasks.filter((task) => task.folderId === subfolderId).length;
+    
+    if (recursive) {
+      const childFolders = folders.filter(f => f.parentFolderId === subfolderId);
+      childFolders.forEach(childFolder => {
+        count += getSubfolderTaskCount(childFolder.id, true);
+      });
+    }
+    
+    return count;
+  };
+
+  const renderSubfolder = (subfolder: Folder) => {
+    const taskCount = getSubfolderTaskCount(subfolder.id, false);
+    const totalTaskCount = getSubfolderTaskCount(subfolder.id, true);
+
+    return (
+      <TouchableOpacity 
+        key={subfolder.id}
+        style={styles.subfolderItem}
+        onPress={() => setSelectedSubfolderId(subfolder.id)}
+      >
+        <View style={styles.subfolderContent}>
+          <MaterialIcons name="folder" size={24} color="#f39c12" />
+          <View style={styles.subfolderInfo}>
+            <Text style={styles.subfolderName}>{subfolder.name}</Text>
+            <Text style={styles.subfolderTaskCount}>
+              {taskCount} task(s){totalTaskCount > taskCount ? ` (${totalTaskCount} total)` : ''}
+            </Text>
+          </View>
+        </View>
+        <TouchableOpacity 
+          onPress={(e: any) => {
+            e.stopPropagation();
+            handleDeleteSubfolder(subfolder.id, subfolder.name);
+          }}
+          style={styles.subfolderDeleteButton}
+        >
+          <MaterialIcons name="delete" size={20} color="#e74c3c" />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderItem = ({ item }: { item: ListItem }) => {
+    if (item.type === 'subfolder') {
+      return renderSubfolder(item.data);
+    } else {
+      return renderTask({ item: item.data });
+    }
   };
 
   const renderTask = ({ item }: { item: Task }) => {
@@ -235,27 +335,62 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack, o
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerText}>{folder.name}</Text>
-          <Text style={styles.taskCount}>{folderTasks.length} task(s)</Text>
+          <Text style={styles.taskCount}>{folderTasks.length} task(s), {subfolders.length} subfolder(s)</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.addButton} 
-          onPress={() => setShowAddTaskModal(true)}
-        >
-          <MaterialIcons name="add" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={styles.addSubfolderButton} 
+            onPress={() => setIsAddingSubfolder(!isAddingSubfolder)}
+          >
+            <MaterialIcons name="create-new-folder" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.addButton} 
+            onPress={() => setShowAddTaskModal(true)}
+          >
+            <MaterialIcons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {folderTasks.length === 0 ? (
+      {isAddingSubfolder && (
+        <View style={styles.addSubfolderContainer}>
+          <TextInput
+            style={styles.input}
+            value={newSubfolderName}
+            onChangeText={setNewSubfolderName}
+            placeholder="Subfolder name"
+            placeholderTextColor="#95a5a6"
+          />
+          <TouchableOpacity style={styles.saveButton} onPress={handleAddSubfolder}>
+            <Text style={styles.saveButtonText}>Add</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.cancelButton} 
+            onPress={() => {
+              setIsAddingSubfolder(false);
+              setNewSubfolderName('');
+            }}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {folderTasks.length === 0 && subfolders.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <MaterialIcons name="check-circle-outline" size={64} color="#bdc3c7" />
-          <Text style={styles.emptyText}>No tasks in this folder</Text>
-          <Text style={styles.emptySubtext}>Tap + to create a task</Text>
+          <MaterialIcons name="folder-open" size={64} color="#bdc3c7" />
+          <Text style={styles.emptyText}>No tasks or subfolders</Text>
+          <Text style={styles.emptySubtext}>Tap + to create a task or folder icon to create a subfolder</Text>
         </View>
       ) : (
         <FlatList
-          data={folderTasks}
-          renderItem={renderTask}
-          keyExtractor={(item) => item.id}
+          data={[
+            ...subfolders.map(subfolder => ({ type: 'subfolder' as const, data: subfolder })),
+            ...folderTasks.map(task => ({ type: 'task' as const, data: task })),
+          ]}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.type === 'subfolder' ? `subfolder-${item.data.id}` : `task-${item.data.id}`}
           contentContainerStyle={styles.listContainer}
         />
       )}
@@ -324,6 +459,94 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 10,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addSubfolderButton: {
+    backgroundColor: '#3498db',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addSubfolderContainer: {
+    flexDirection: 'row',
+    padding: 15,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ecf0f1',
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#bdc3c7',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#2c3e50',
+    backgroundColor: '#fff',
+    marginRight: 10,
+  },
+  saveButton: {
+    backgroundColor: '#27ae60',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    backgroundColor: '#95a5a6',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    marginLeft: 10,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  subfolderItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#ecf0f1',
+  },
+  subfolderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  subfolderInfo: {
+    marginLeft: 12,
+  },
+  subfolderName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2c3e50',
+  },
+  subfolderTaskCount: {
+    fontSize: 14,
+    color: '#7f8c8d',
+    marginTop: 2,
+  },
+  subfolderDeleteButton: {
+    padding: 4,
   },
   listContainer: {
     padding: 10,
