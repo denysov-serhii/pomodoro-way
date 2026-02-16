@@ -18,7 +18,7 @@ const FoldersManager: React.FC = () => {
   if (!context) {
     throw new Error('FoldersManager must be used within AppProvider');
   }
-  const { folders, addFolder, updateFolder, deleteFolder, tasks } = context;
+  const { folders, addFolder, deleteFolder, tasks } = context;
   const { dialogState, showDialog, hideDialog, handleConfirm } = useConfirmDialog();
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [isAdding, setIsAdding] = useState<boolean>(false);
