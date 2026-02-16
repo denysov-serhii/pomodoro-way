@@ -123,7 +123,10 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
       return;
     }
 
-    addFolder({ name: newFolderName.trim() });
+    addFolder({ 
+      name: newFolderName.trim(),
+      parentFolderId: null, // Explicitly set to null to create root folder
+    });
     setNewFolderName('');
     setIsAddingFolder(false);
   };
@@ -138,9 +141,12 @@ const TaskList: React.FC<TaskListProps> = ({ onAddTask, onNavigateToTimer }) => 
   // Get tasks that are not in any folder and not completed, excluding starred tasks (they're shown in starred section)
   const tasksWithoutFolder = sortTasks(tasks.filter(task => !task.folderId && !task.isCompleted && !task.isStarred));
 
-  // Create combined list: folders first, then tasks without folders
+  // Get only root folders (folders without a parent)
+  const rootFolders = folders.filter(folder => !folder.parentFolderId);
+
+  // Create combined list: root folders first, then tasks without folders
   const listItems: ListItem[] = [
-    ...folders.map(folder => ({ type: 'folder' as const, data: folder })),
+    ...rootFolders.map(folder => ({ type: 'folder' as const, data: folder })),
     ...tasksWithoutFolder.map(task => ({ type: 'task' as const, data: task })),
   ];
 
