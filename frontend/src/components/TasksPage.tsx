@@ -8,9 +8,10 @@ import {
 import TaskList from './TaskList';
 import ProjectsManager from './ProjectsManager';
 import TagsManager from './TagsManager';
+import FoldersManager from './FoldersManager';
 import AddTaskModal from './AddTaskModal';
 
-type TasksTab = 'tasks' | 'projects' | 'tags';
+type TasksTab = 'tasks' | 'projects' | 'tags' | 'folders';
 
 interface TasksPageProps {
   onNavigateToTimer: () => void;
@@ -28,6 +29,8 @@ const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToTimer }) => {
         return <ProjectsManager onNavigateToTimer={onNavigateToTimer} />;
       case 'tags':
         return <TagsManager />;
+      case 'folders':
+        return <FoldersManager />;
       default:
         return <TaskList onAddTask={() => setShowAddTaskModal(true)} onNavigateToTimer={onNavigateToTimer} />;
     }
@@ -50,6 +53,14 @@ const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToTimer }) => {
         >
           <Text style={[styles.tabText, activeTab === 'projects' && styles.tabTextActive]}>
             Projects
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'folders' && styles.tabActive]}
+          onPress={() => setActiveTab('folders')}
+        >
+          <Text style={[styles.tabText, activeTab === 'folders' && styles.tabTextActive]}>
+            Folders
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
