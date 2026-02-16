@@ -1,7 +1,7 @@
 import { db } from '../config/firebase';
 import { collection, getDocs, setDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Task, Project, Folder, Tag, TimerState, Settings, PomodoroSession } from '../types';
+import { Task, Project, Folder, Tag, TimerState, Settings, PomodoroSession, DailyPlan } from '../types';
 import { logError } from './errorLogger';
 
 // Firestore collection names
@@ -12,6 +12,7 @@ const COLLECTIONS = {
   TAGS: 'tags',
   SETTINGS: 'settings',
   POMODORO_SESSIONS: 'pomodoroSessions',
+  DAILY_PLANS: 'dailyPlans',
 };
 
 // AsyncStorage keys (used for timer state which is temporary)
@@ -310,6 +311,33 @@ export const loadPomodoroSessions = async (): Promise<PomodoroSession[]> => {
   }
 };
 
+export const saveDailyPlans = async (plans: DailyPlan[]): Promise<void> => {
+  try {
+    const batch = writeBatch(db);
+    
+    // Update or create plans
+    plans.forEach(plan => {
+      batch.set(doc(db, COLLECTIONS.DAILY_PLANS, plan.id), plan);
+    });
+    
+    await batch.commit();
+  } catch (error) {
+    logError('Error saving daily plans', 'storage.saveDailyPlans', error);
+  }
+};
+
+export const loadDailyPlans = async (): Promise<DailyPlan[]> => {
+  try {
+    const plansCollection = collection(db, COLLECTIONS.DAILY_PLANS);
+    const q = query(plansCollection, orderBy('date', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as DailyPlan);
+  } catch (error) {
+    logError('Error loading daily plans', 'storage.loadDailyPlans', error);
+    return [];
+  }
+};
+
 export interface BackupData {
   version: string;
   exportDate: string;
@@ -318,6 +346,7 @@ export interface BackupData {
   folders: Folder[];
   tags: Tag[];
   pomodoroSessions: PomodoroSession[];
+  dailyPlans: DailyPlan[];
   settings: Settings | null;
 }
 
@@ -328,6 +357,7 @@ export const exportBackup = async (): Promise<string> => {
     const folders = await loadFolders();
     const tags = await loadTags();
     const pomodoroSessions = await loadPomodoroSessions();
+    const dailyPlans = await loadDailyPlans();
     const settings = await loadSettings();
     
     const backupData: BackupData = {
@@ -338,6 +368,7 @@ export const exportBackup = async (): Promise<string> => {
       folders,
       tags,
       pomodoroSessions,
+      dailyPlans,
       settings,
     };
     
@@ -366,6 +397,9 @@ export const importBackup = async (backupJson: string): Promise<void> => {
     await saveTags(backupData.tags);
     if (backupData.pomodoroSessions) {
       await savePomodoroSessions(backupData.pomodoroSessions);
+    }
+    if (backupData.dailyPlans) {
+      await saveDailyPlans(backupData.dailyPlans);
     }
     if (backupData.settings) {
       await saveSettings(backupData.settings);

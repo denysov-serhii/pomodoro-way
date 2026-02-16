@@ -5,6 +5,7 @@ import { useTimerControls } from '../hooks/useTimerControls';
 import TimerDisplay from './timer/TimerDisplay';
 import TimerControls from './timer/TimerControls';
 import TaskSelector from './timer/TaskSelector';
+import DailyPlanManager from './DailyPlanManager';
 import ConfirmDialog from './common/ConfirmDialog';
 import { timerStyles as styles } from '../styles/timerStyles';
 
@@ -62,6 +63,8 @@ const PomodoroTimer: React.FC = () => {
         onFinish={handleFinish}
         onSkipBreak={skipBreak}
       />
+
+      {sessionType === 'pomodoro' && <DailyPlanManager />}
 
       <ConfirmDialog
         visible={confirmDialog.visible}
