@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { clearTimerState } from '../utils/storage';
 import { playNotificationSound } from '../utils/audio';
-import { sendPomodoroCompleteNotification, schedulePomodoroCompleteNotification, scheduleBreakCompleteNotification, cancelTimerNotification } from '../utils/notifications';
+import { sendPomodoroCompleteNotification, schedulePomodoroCompleteNotification, scheduleBreakCompleteNotification, cancelTimerNotification, dismissOngoingTimerNotification } from '../utils/notifications';
 import { logError } from '../utils/errorLogger';
 
 interface TimerState {
@@ -119,6 +119,10 @@ export const useTimerControls = (timerState: TimerState) => {
     setIsCompleted(false);
     setStartTime(null);
     clearTimerState();
+    // Dismiss ongoing notification when resetting
+    dismissOngoingTimerNotification().catch(error => {
+      logError('Failed to dismiss ongoing notification on reset', 'useTimerControls.handleReset', error);
+    });
   };
 
   const handleFinish = () => {
@@ -157,6 +161,11 @@ export const useTimerControls = (timerState: TimerState) => {
           setTimeLeft(0);
           clearTimerState();
           hideDialog();
+          
+          // Dismiss ongoing notification when finishing early
+          dismissOngoingTimerNotification().catch(error => {
+            logError('Failed to dismiss ongoing notification on finish', 'useTimerControls.handleFinish', error);
+          });
           
           // Play notification sound and send notification
           playNotificationSound();

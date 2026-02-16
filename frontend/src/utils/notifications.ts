@@ -4,6 +4,7 @@ import { logError } from './errorLogger';
 
 // Store notification identifiers for cancellation
 let currentTimerNotificationId: string | null = null;
+let ongoingTimerNotificationId: string | null = null;
 
 // Configure how notifications should be handled when the app is in the foreground
 Notifications.setNotificationHandler({
@@ -212,4 +213,81 @@ export const scheduleBreakCompleteNotification = async (
   const body = 'Time to get back to work!';
   
   return await scheduleTimerNotification(title, body, durationSeconds);
+};
+
+/**
+ * Format seconds into MM:SS format
+ * @param seconds - Total seconds
+ * @returns Formatted time string
+ */
+const formatTime = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
+
+/**
+ * Show or update an ongoing notification displaying the timer countdown
+ * This notification persists even when the app is in the background
+ * @param timeLeft - Remaining time in seconds
+ * @param sessionType - Type of session (pomodoro, shortBreak, or longBreak)
+ * @param taskName - Optional task name
+ */
+export const showOngoingTimerNotification = async (
+  timeLeft: number,
+  sessionType: 'pomodoro' | 'shortBreak' | 'longBreak',
+  taskName?: string
+): Promise<void> => {
+  try {
+    // Only show ongoing notifications on Android
+    if (Platform.OS !== 'android') {
+      return;
+    }
+
+    const sessionEmoji = sessionType === 'pomodoro' ? '🍅' : '⏸️';
+    const sessionName = sessionType === 'pomodoro' 
+      ? 'Pomodoro' 
+      : sessionType === 'longBreak' 
+        ? 'Long Break' 
+        : 'Break';
+    
+    const title = `${sessionEmoji} ${sessionName} - ${formatTime(timeLeft)}`;
+    const body = taskName 
+      ? `Working on: ${sanitizeTaskName(taskName)}`
+      : `${sessionName} in progress`;
+
+    // Present the notification immediately
+    await Notifications.dismissNotificationAsync(ongoingTimerNotificationId || '');
+    ongoingTimerNotificationId = await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: false, // No sound for ongoing updates
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+        sticky: true, // Make notification persistent (non-dismissible by user swipe)
+        autoDismiss: false,
+      },
+      trigger: null, // Immediate
+    });
+  } catch (error) {
+    logError('Error showing ongoing timer notification', 'notifications.showOngoingTimerNotification', error);
+  }
+};
+
+/**
+ * Dismiss the ongoing timer notification
+ */
+export const dismissOngoingTimerNotification = async (): Promise<void> => {
+  try {
+    if (Platform.OS !== 'android') {
+      return;
+    }
+
+    if (ongoingTimerNotificationId) {
+      await Notifications.dismissNotificationAsync(ongoingTimerNotificationId);
+      ongoingTimerNotificationId = null;
+    }
+  } catch (error) {
+    logError('Error dismissing ongoing notification', 'notifications.dismissOngoingTimerNotification', error);
+  }
 };

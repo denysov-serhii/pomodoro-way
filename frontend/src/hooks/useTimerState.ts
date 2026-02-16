@@ -3,7 +3,7 @@ import { AppContext } from '../contexts/AppContext';
 import { saveTimerState, loadTimerState, clearTimerState } from '../utils/storage';
 import { DurationOption, ConfirmDialogState } from '../types';
 import { playNotificationSound, initializeAudio } from '../utils/audio';
-import { sendPomodoroCompleteNotification, sendBreakCompleteNotification, schedulePomodoroCompleteNotification, scheduleBreakCompleteNotification, cancelTimerNotification } from '../utils/notifications';
+import { sendPomodoroCompleteNotification, sendBreakCompleteNotification, schedulePomodoroCompleteNotification, scheduleBreakCompleteNotification, cancelTimerNotification, showOngoingTimerNotification, dismissOngoingTimerNotification } from '../utils/notifications';
 import { logError } from '../utils/errorLogger';
 
 export const DURATION_OPTIONS: DurationOption[] = [
@@ -164,6 +164,11 @@ export const useTimerState = () => {
     let interval: ReturnType<typeof setInterval> | null = null;
 
     if (isRunning && startTime) {
+      // Show initial ongoing notification
+      showOngoingTimerNotification(timeLeft, sessionType, currentTask?.title).catch(error => {
+        logError('Failed to show ongoing notification', 'useTimerState.timerEffect', error);
+      });
+
       interval = setInterval(() => {
         // Calculate expected time based on actual elapsed time
         const now = Date.now();
@@ -176,7 +181,10 @@ export const useTimerState = () => {
           setIsRunning(false);
           setIsCompleted(true);
           
-          // Cancel any pending notification since timer completed
+          // Dismiss ongoing notification and cancel any pending notification since timer completed
+          dismissOngoingTimerNotification().catch(error => {
+            logError('Failed to dismiss ongoing notification on complete', 'useTimerState.timerEffect', error);
+          });
           cancelTimerNotification().catch(error => {
             logError('Failed to cancel notification on complete', 'useTimerState.timerEffect', error);
           });
@@ -236,8 +244,18 @@ export const useTimerState = () => {
         } else {
           // Synchronize timer with expected time
           setTimeLeft(expectedTimeLeft);
+          
+          // Update ongoing notification with current time
+          showOngoingTimerNotification(expectedTimeLeft, sessionType, currentTask?.title).catch(error => {
+            logError('Failed to update ongoing notification', 'useTimerState.timerEffect', error);
+          });
         }
       }, 1000);
+    } else {
+      // Timer is paused or not running, dismiss ongoing notification
+      dismissOngoingTimerNotification().catch(error => {
+        logError('Failed to dismiss ongoing notification when paused', 'useTimerState.timerEffect', error);
+      });
     }
 
     return () => {
@@ -318,9 +336,12 @@ export const useTimerState = () => {
     setStartTime(null);
     clearTimerState();
     hideDialog();
-    // Cancel any pending notification
+    // Cancel any pending notification and dismiss ongoing notification
     cancelTimerNotification().catch(error => {
       logError('Failed to cancel notification on skip break', 'useTimerState.skipBreak', error);
+    });
+    dismissOngoingTimerNotification().catch(error => {
+      logError('Failed to dismiss ongoing notification on skip break', 'useTimerState.skipBreak', error);
     });
   };
 
