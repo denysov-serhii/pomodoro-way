@@ -71,10 +71,10 @@ const FoldersManager: React.FC = () => {
   };
 
   // Build hierarchy of folders
-  const buildFolderHierarchy = () => {
+  const buildFolderHierarchy = (): (Folder & { level: number })[] => {
     const rootFolders = folders.filter(f => !f.parentFolderId);
     
-    const buildTree = (parentId: string | null, level: number = 0): any[] => {
+    const buildTree = (parentId: string | null, level: number = 0): (Folder & { level: number })[] => {
       const childFolders = folders.filter(f => f.parentFolderId === parentId);
       return childFolders.flatMap(folder => [
         { ...folder, level },

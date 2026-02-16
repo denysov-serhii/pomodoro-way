@@ -76,7 +76,7 @@ const DailyPlanManager: React.FC = () => {
     return { completed: completedToday, planned: plannedPomodoros };
   };
 
-  const renderTaskInModal = ({ item }: { item: Task }) => {
+  const renderModalTaskItem = ({ item }: { item: Task }) => {
     const isSelected = selectedTasks.some(t => t.taskId === item.id);
     const selectedTask = selectedTasks.find(t => t.taskId === item.id);
 
@@ -187,7 +187,7 @@ const DailyPlanManager: React.FC = () => {
               ) : (
                 activeTasks.map(task => (
                   <View key={task.id}>
-                    {renderTaskInModal({ item: task })}
+                    {renderModalTaskItem({ item: task })}
                   </View>
                 ))
               )}
