@@ -169,7 +169,7 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack, o
           </View>
         </View>
         <TouchableOpacity 
-          onPress={(e: any) => {
+          onPress={(e: GestureResponderEvent) => {
             e.stopPropagation();
             handleDeleteSubfolder(subfolder.id, subfolder.name);
           }}
@@ -381,7 +381,7 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack, o
         <View style={styles.emptyContainer}>
           <MaterialIcons name="folder-open" size={64} color="#bdc3c7" />
           <Text style={styles.emptyText}>No tasks or subfolders</Text>
-          <Text style={styles.emptySubtext}>Tap + to create a task or folder icon to create a subfolder</Text>
+          <Text style={styles.emptySubtext}>Tap + to create a task or the folder icon to create a subfolder</Text>
         </View>
       ) : (
         <FlatList
