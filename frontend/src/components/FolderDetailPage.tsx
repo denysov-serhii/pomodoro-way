@@ -130,12 +130,14 @@ const FolderDetailPage: React.FC<FolderDetailPageProps> = ({ folderId, onBack, o
   const handleDeleteSubfolder = (subfolderId: string, subfolderName: string) => {
     showDialog({
       title: 'Delete Subfolder',
-      message: `Are you sure you want to delete "${subfolderName}"? Tasks in this folder will be moved to no folder. Child folders will be moved to the parent folder.`,
+      message: `Are you sure you want to delete "${subfolderName}"? Tasks in this folder will be moved to no folder. Child folders will become subfolders of the current folder.`,
       confirmText: 'Delete',
       onConfirm: () => deleteFolder(subfolderId),
     });
   };
 
+  // Note: This recursive counting is acceptable for typical task management use cases
+  // where folder nesting depth is shallow. For deeply nested structures, consider memoization.
   const getSubfolderTaskCount = (subfolderId: string, recursive: boolean = false): number => {
     let count = tasks.filter((task) => task.folderId === subfolderId).length;
     
