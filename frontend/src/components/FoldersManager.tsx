@@ -109,9 +109,10 @@ const FoldersManager: React.FC = () => {
         <View style={styles.folderActions}>
           <TouchableOpacity 
             onPress={() => handleAddSubFolder(item.id)}
-            style={styles.actionButton}
+            style={styles.subfolderButton}
           >
-            <MaterialIcons name="create-new-folder" size={22} color="#3498db" />
+            <MaterialIcons name="create-new-folder" size={20} color="#fff" />
+            <Text style={styles.subfolderButtonText}>Subfolder</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleDeleteFolder(item.id, item.name)}>
             <MaterialIcons name="delete" size={24} color="#e74c3c" />
@@ -282,6 +283,20 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     padding: 4,
+  },
+  subfolderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3498db',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 4,
+  },
+  subfolderButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   folderInfo: {
     marginLeft: 12,
