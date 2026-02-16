@@ -30,8 +30,9 @@ export default function App() {
         // Request permissions
         await requestNotificationPermissions();
         
-        // Set up Android notification channel
+        // Set up Android notification channels
         if (Platform.OS === 'android') {
+          // Channel for timer completion notifications (with sound)
           await Notifications.setNotificationChannelAsync('timer-notifications', {
             name: 'Timer Notifications',
             importance: Notifications.AndroidImportance.HIGH,
@@ -40,6 +41,17 @@ export default function App() {
             enableVibrate: true,
             enableLights: true,
             lightColor: '#e74c3c',
+          });
+          
+          // Channel for ongoing timer notifications (silent, persistent)
+          await Notifications.setNotificationChannelAsync('ongoing-timer', {
+            name: 'Ongoing Timer',
+            importance: Notifications.AndroidImportance.LOW,
+            sound: undefined, // No sound for ongoing updates
+            vibrationPattern: undefined,
+            enableVibrate: false,
+            enableLights: false,
+            showBadge: false,
           });
         }
       } catch (error) {

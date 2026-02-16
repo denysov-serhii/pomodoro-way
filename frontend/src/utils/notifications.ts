@@ -256,18 +256,25 @@ export const showOngoingTimerNotification = async (
       ? `Working on: ${sanitizeTaskName(taskName)}`
       : `${sessionName} in progress`;
 
-    // Present the notification immediately
-    await Notifications.dismissNotificationAsync(ongoingTimerNotificationId || '');
+    // Dismiss previous notification and present the updated one
+    if (ongoingTimerNotificationId) {
+      await Notifications.dismissNotificationAsync(ongoingTimerNotificationId);
+    }
+    
     ongoingTimerNotificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title,
         body,
         sound: false, // No sound for ongoing updates
-        priority: Notifications.AndroidNotificationPriority.HIGH,
+        priority: Notifications.AndroidNotificationPriority.DEFAULT,
         sticky: true, // Make notification persistent (non-dismissible by user swipe)
         autoDismiss: false,
+        categoryIdentifier: 'timer',
       },
-      trigger: null, // Immediate
+      trigger: {
+        channelId: 'ongoing-timer',
+        seconds: 0, // Immediate
+      },
     });
   } catch (error) {
     logError('Error showing ongoing timer notification', 'notifications.showOngoingTimerNotification', error);
