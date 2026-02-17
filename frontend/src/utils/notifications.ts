@@ -138,6 +138,18 @@ export const scheduleTimerNotification = async (
     // Cancel any existing timer notification
     await cancelTimerNotification();
 
+    // Build trigger configuration based on platform
+    const trigger: Notifications.NotificationTriggerInput = Platform.OS === 'android'
+      ? {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds,
+          channelId: 'timer-notifications',
+        }
+      : {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds,
+        };
+
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title,
@@ -145,16 +157,7 @@ export const scheduleTimerNotification = async (
         sound: true,
         priority: Notifications.AndroidNotificationPriority.HIGH,
       },
-      trigger: Platform.OS === 'android' 
-        ? {
-            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-            seconds,
-            channelId: 'timer-notifications',
-          }
-        : {
-            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-            seconds,
-          },
+      trigger,
     });
 
     // Store the notification ID for potential cancellation

@@ -205,10 +205,10 @@ This is **expected behavior** when the app is completely closed. To keep ongoing
 
 ### iOS Notifications Not Working
 
-1. Check Info.plist includes `UIBackgroundModes`
-2. Verify user granted notification permissions
-3. Test on real device (simulator has limitations)
-4. Check iOS notification settings for the app
+1. Verify user granted notification permissions (check in iOS Settings)
+2. Test on real device (simulator has limitations with notifications)
+3. Check iOS notification settings for the app
+4. Ensure app is running iOS 10.0 or later (required for local notifications)
 
 ## Future Enhancements
 
