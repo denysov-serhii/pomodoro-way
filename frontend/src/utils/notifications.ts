@@ -24,7 +24,7 @@ Notifications.setNotificationHandler({
  * @returns Promise<boolean> - true if permissions granted, false otherwise
  */
 export const requestNotificationPermissions = async (): Promise<boolean> => {
-  if (Platform.OS === 'android') {
+  try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     
     // If already granted, return true
@@ -35,7 +35,13 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     // Only request if we haven't asked yet (undetermined status)
     // Don't re-request if user has denied permissions to avoid repeated prompts
     if (existingStatus === 'undetermined') {
-      const { status } = await Notifications.requestPermissionsAsync();
+      const { status } = await Notifications.requestPermissionsAsync({
+        ios: {
+          allowAlert: true,
+          allowBadge: true,
+          allowSound: true,
+        },
+      });
       if (status === 'granted') {
         return true;
       }
@@ -44,11 +50,10 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     // Permissions not granted (either previously denied, or user just denied the request)
     console.warn('Notification permissions not granted');
     return false;
+  } catch (error) {
+    logError('Error requesting notification permissions', 'notifications.requestNotificationPermissions', error);
+    return false;
   }
-  
-  // For non-Android platforms (iOS, web), return true as a no-op
-  // Note: iOS notification permissions would need separate implementation if required
-  return true;
 };
 
 /**
@@ -61,11 +66,6 @@ export const sendLocalNotification = async (
   body: string
 ): Promise<void> => {
   try {
-    // Only send notifications on Android (web/iOS can use other mechanisms)
-    if (Platform.OS !== 'android') {
-      return;
-    }
-
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
@@ -123,13 +123,11 @@ export const sendBreakCompleteNotification = async (
 
 /**
  * Schedule a notification to fire after a specified duration
- * This allows notifications to work even when the app is in the background
+ * This allows notifications to work even when the app is in the background or closed
  * @param title - Notification title
  * @param body - Notification body
  * @param seconds - Number of seconds until notification should fire
  * @returns The notification identifier for potential cancellation
- * @note Android only - iOS requires different implementation with Background Tasks API,
- *       and web uses browser notifications which are not implemented in this app
  */
 export const scheduleTimerNotification = async (
   title: string,
@@ -137,11 +135,6 @@ export const scheduleTimerNotification = async (
   seconds: number
 ): Promise<string | null> => {
   try {
-    // Only schedule notifications on Android
-    if (Platform.OS !== 'android') {
-      return null;
-    }
-
     // Cancel any existing timer notification
     await cancelTimerNotification();
 
@@ -152,10 +145,16 @@ export const scheduleTimerNotification = async (
         sound: true,
         priority: Notifications.AndroidNotificationPriority.HIGH,
       },
-      trigger: {
-        seconds,
-        channelId: 'timer-notifications',
-      },
+      trigger: Platform.OS === 'android' 
+        ? {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds,
+            channelId: 'timer-notifications',
+          }
+        : {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds,
+          },
     });
 
     // Store the notification ID for potential cancellation
@@ -272,8 +271,9 @@ export const showOngoingTimerNotification = async (
         categoryIdentifier: 'timer',
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         channelId: 'ongoing-timer',
-        seconds: 0, // Immediate
+        seconds: 1, // Schedule for immediate display
       },
     });
   } catch (error) {

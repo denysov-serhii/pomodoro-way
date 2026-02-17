@@ -60,6 +60,19 @@ export default function App() {
     };
     
     setupNotifications();
+
+    // Handle notification responses (when user taps on notification)
+    const notificationResponseSubscription = Notifications.addNotificationResponseReceivedListener(
+      (_response) => {
+        // When user taps on notification, navigate to timer tab
+        setActiveTab('timer');
+      }
+    );
+
+    // Cleanup subscription on unmount
+    return () => {
+      notificationResponseSubscription.remove();
+    };
   }, []);
 
   // Render all tabs but only show the active one to prevent unmounting
