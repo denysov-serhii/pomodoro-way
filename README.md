@@ -10,11 +10,16 @@ A React Native application for managing tasks and tracking productivity using th
 - Visual countdown display
 - Links to tasks for tracking work sessions
 - Automatic task completion counter
-- **Android notifications** when pomodoro or break sessions complete
-- **Ongoing notification in notification shade** showing live timer countdown (Android)
-  - Timer visible even when app is closed or in background
-  - Similar to system clock timer functionality
-  - Updates every second with remaining time
+- **Cross-platform notifications** when pomodoro or break sessions complete
+  - Works even when app is completely closed (Android & iOS)
+  - Scheduled notifications fire at exact completion time
+  - User receives alert and can tap to open app
+- **Ongoing notification in notification shade** showing live timer countdown
+  - Real-time updates while app is running (foreground or background)
+  - Timer visible in notification shade on Android
+  - Displays remaining time and task being worked on
+  - Note: Stops when app is force-closed (platform limitation)
+- See [NOTIFICATIONS.md](frontend/NOTIFICATIONS.md) for detailed notification documentation
 
 ### Task Management
 - Create and manage tasks

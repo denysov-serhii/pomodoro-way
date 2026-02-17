@@ -273,7 +273,11 @@ export const showOngoingTimerNotification = async (
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         channelId: 'ongoing-timer',
-        seconds: 1, // Schedule for immediate display
+        // Use 1 second instead of 0 because:
+        // 1. Android requires minimum 1 second for TIME_INTERVAL trigger
+        // 2. We need channelId for proper notification categorization
+        // 3. The 1-second delay is negligible for display purposes
+        seconds: 1,
       },
     });
   } catch (error) {
