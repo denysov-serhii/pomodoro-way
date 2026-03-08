@@ -1,7 +1,6 @@
 {
   "appId": "com.gaydara27sorganization.pomodoroway",
   "productName": "Pomodoro Way",
-  "npmClient": "pnpm",
   "directories": {
     "buildResources": "assets",
     "output": "electron-dist"
