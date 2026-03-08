@@ -44,16 +44,43 @@ build_frontend() {
     
     cd frontend
     
-    if ! command_exists npm; then
-        print_error "npm is not installed!"
+    if ! command_exists pnpm; then
+        print_error "pnpm is not installed!"
         exit 1
     fi
     
     print_info "Installing dependencies..."
-    npm install
+    pnpm install
     
     print_success "Frontend dependencies installed successfully!"
     
+    cd ..
+}
+
+# Build desktop app
+build_desktop() {
+    print_section "Building Desktop App"
+
+    if [ ! -d "frontend" ]; then
+        print_error "Frontend directory not found!"
+        exit 1
+    fi
+
+    cd frontend
+
+    if ! command_exists pnpm; then
+        print_error "pnpm is not installed!"
+        exit 1
+    fi
+
+    print_info "Installing dependencies..."
+    pnpm install
+
+    print_info "Building desktop application..."
+    pnpm run desktop
+
+    print_success "Desktop application built successfully! Check frontend/electron-dist/"
+
     cd ..
 }
 
@@ -69,7 +96,7 @@ run_frontend() {
     cd frontend
     
     print_info "Starting Expo development server..."
-    npm start
+    pnpm start
     
     cd ..
 }
@@ -83,12 +110,14 @@ Usage: $0 [command]
 
 Commands:
     build             Build frontend (install dependencies)
+    desktop           Build desktop application (packages for current OS)
     run               Run frontend development server
     help              Show this help message
 
 Examples:
-    $0 build          # Install frontend dependencies
-    $0 run            # Run the frontend development server
+    $0 build           # Install frontend dependencies
+    $0 desktop         # Build desktop application
+    $0 run             # Run the frontend development server
 
 EOF
 }
@@ -97,6 +126,9 @@ EOF
 case "${1:-help}" in
     build|frontend)
         build_frontend
+        ;;
+    desktop)
+        build_desktop
         ;;
     run|run-frontend)
         run_frontend

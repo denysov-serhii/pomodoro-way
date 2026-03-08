@@ -63,6 +63,9 @@ The repository includes a convenient build script to manage the frontend:
 
 # Run frontend development server
 ./build.sh run
+
+# Build desktop app (Windows/macOS/Linux)
+./build.sh desktop
 ```
 
 ## Installation and Setup
@@ -189,6 +192,32 @@ The development server will start and you can access the app on:
 - iOS device/simulator (press `i`, macOS only)
 
 ## Building for Production
+
+### Desktop (Windows / macOS / Linux)
+
+Build a native desktop app that can be launched like any regular application:
+
+```bash
+cd frontend
+npm install
+npm run desktop
+```
+
+The packaged output lands in `frontend/electron-dist/`:
+
+| Platform | Output | How to launch |
+|----------|--------|---------------|
+| **Windows** | `Pomodoro Way*.exe` (portable) | Double-click the `.exe` — no installation needed |
+| **macOS** | `Pomodoro Way*.dmg` | Open the `.dmg`, drag the `.app` to Applications, then launch from Finder / Spotlight |
+| **Linux** | `Pomodoro Way*.AppImage` | `chmod +x "Pomodoro Way-1.0.0.AppImage"` then double-click or run it |
+
+Or use the build script from the repo root:
+
+```bash
+./build.sh desktop
+```
+
+### Mobile / Web (EAS)
 
 Follow the [Expo build process](https://docs.expo.dev/build/setup/) for your target platform:
 

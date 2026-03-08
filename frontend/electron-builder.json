@@ -1,0 +1,26 @@
+{
+  "appId": "com.gaydara27sorganization.pomodoroway",
+  "productName": "Pomodoro Way",
+  "directories": {
+    "buildResources": "assets",
+    "output": "electron-dist"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*"
+  ],
+  "win": {
+    "target": "portable",
+    "icon": "assets/icon.png"
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "assets/icon.png",
+    "category": "public.app-category.productivity"
+  },
+  "linux": {
+    "target": "AppImage",
+    "icon": "assets/icon.png",
+    "category": "Utility"
+  }
+}

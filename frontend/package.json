@@ -1,12 +1,17 @@
 {
   "name": "pomodoro-way",
   "version": "1.0.0",
+  "description": "A Pomodoro timer and task manager built with React Native and Expo",
+  "author": "Serhii Denysov",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "electron:start": "electron electron/main.js",
+    "electron:build": "expo export --platform web && electron-builder --config electron-builder.json",
+    "desktop": "pnpm run electron:build"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -30,6 +35,8 @@
   "devDependencies": {
     "@types/react": "^19.1.17",
     "@types/react-dom": "^19.1.11",
+    "electron": "^40.8.0",
+    "electron-builder": "^26.8.1",
     "typescript": "^5.9.3"
   }
 }
