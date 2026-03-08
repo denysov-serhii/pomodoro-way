@@ -44,13 +44,13 @@ build_frontend() {
     
     cd frontend
     
-    if ! command_exists npm; then
-        print_error "npm is not installed!"
+    if ! command_exists pnpm; then
+        print_error "pnpm is not installed!"
         exit 1
     fi
     
     print_info "Installing dependencies..."
-    npm install
+    pnpm install
     
     print_success "Frontend dependencies installed successfully!"
     
@@ -68,16 +68,16 @@ build_desktop() {
 
     cd frontend
 
-    if ! command_exists npm; then
-        print_error "npm is not installed!"
+    if ! command_exists pnpm; then
+        print_error "pnpm is not installed!"
         exit 1
     fi
 
     print_info "Installing dependencies..."
-    npm install
+    pnpm install
 
     print_info "Building desktop application..."
-    npm run desktop
+    pnpm run desktop
 
     print_success "Desktop application built successfully! Check frontend/electron-dist/"
 
@@ -96,7 +96,7 @@ run_frontend() {
     cd frontend
     
     print_info "Starting Expo development server..."
-    npm start
+    pnpm start
     
     cd ..
 }

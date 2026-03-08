@@ -11,7 +11,7 @@
     "web": "expo start --web",
     "electron:start": "electron electron/main.js",
     "electron:build": "expo export --platform web && electron-builder --config electron-builder.json",
-    "desktop": "npm run electron:build"
+    "desktop": "pnpm run electron:build"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
