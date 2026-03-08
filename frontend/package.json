@@ -1,6 +1,8 @@
 {
   "name": "pomodoro-way",
   "version": "1.0.0",
+  "description": "A Pomodoro timer and task manager built with React Native and Expo",
+  "author": "Serhii Denysov",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
